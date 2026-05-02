@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, X, Move } from 'lucide-react';
+import { Plus, X, Move, Calculator } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Viewport {
@@ -29,6 +29,8 @@ export default function App() {
   const [expressions, setExpressions] = useState<Expression[]>([]);
   const [nextId, setNextId] = useState(1);
   const [activeInputId, setActiveInputId] = useState<number | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isKeypadVisible, setIsKeypadVisible] = useState(true);
   const [viewport, setViewport] = useState<Viewport>({
     xMin: -10,
     xMax: 10,
@@ -471,95 +473,130 @@ export default function App() {
 
   return (
     <div className="flex flex-col-reverse md:flex-row h-screen w-screen overflow-hidden bg-white text-gray-900 font-sans">
-      <aside className="w-full md:w-[360px] border-t md:border-t-0 md:border-r border-gray-200 flex flex-col bg-gray-50 z-10 h-[45vh] md:h-screen shadow-lg">
-        <header className="p-3 bg-white border-b border-gray-200 font-bold text-center text-lg md:text-xl tracking-tight shrink-0">
-          Graphing Calculator
-        </header>
-
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
-          <AnimatePresence initial={false}>
-            {expressions.map((expr) => (
-              <motion.div
-                key={expr.id}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white border border-gray-200 p-2 rounded-lg shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all group"
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.aside
+            initial={{ opacity: 0, x: -360 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -360 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="w-full md:w-[360px] border-t md:border-t-0 md:border-r border-gray-200 flex flex-col bg-gray-50 z-10 h-[45vh] md:h-screen shadow-lg"
+          >
+            <header className="p-3 bg-white border-b border-gray-200 font-bold flex items-center justify-between text-lg md:text-xl tracking-tight shrink-0 pl-16 md:pl-3">
+              <span>Calculator</span>
+              <button 
+                onClick={() => setIsKeypadVisible(!isKeypadVisible)}
+                className={`p-2 hover:bg-gray-100 rounded-lg transition-colors ${isKeypadVisible ? 'text-blue-600 bg-blue-50' : 'text-gray-500'}`}
+                title={isKeypadVisible ? "Hide Keypad" : "Show Keypad"}
               >
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setExpressions(prev => prev.map(e => e.id === expr.id ? { ...e, visible: !e.visible } : e));
-                    }}
-                    className="w-5 h-5 rounded-full shrink-0 border-2 transition-colors cursor-pointer"
-                    style={{ 
-                      backgroundColor: expr.visible ? expr.color : 'transparent',
-                      borderColor: expr.color
-                    }}
-                  />
-                  <input
-                    data-id={expr.id}
-                    className="flex-1 outline-none text-base md:text-lg font-medium expr-input"
-                    value={expr.text}
-                    onChange={(e) => handleUpdateText(expr.id, e.target.value)}
-                    onFocus={() => setActiveInputId(expr.id)}
-                    placeholder="e.g. x^2"
-                  />
-                  <button
-                    onClick={() => {
-                      setExpressions(prev => prev.filter(e => e.id !== expr.id));
-                      if (activeInputId === expr.id) setActiveInputId(null);
-                    }}
-                    className="text-gray-400 hover:text-red-500 px-1"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-                {expr.error && (
-                  <div className="text-[12px] text-red-600 mt-1 font-medium bg-red-50 p-1 rounded">
-                    {expr.error}
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-
-        <button
-          onClick={() => addExpression('')}
-          className="m-3 flex items-center justify-center gap-2 py-2 md:py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all active:scale-95 shrink-0 shadow-md"
-        >
-          <Plus size={18} /> Add Expression
-        </button>
-
-        <div className="bg-white border-t border-gray-200 p-1 shrink-0 select-none">
-          <div className="grid grid-cols-7 gap-1">
-            {[
-              ['x', 'x', true], ['y', 'y', true], ['x²', '^2'], ['a^b', '^'], ['√', 'sqrt('], ['|a|', 'abs('], ['π', 'π'],
-              ['7', '7'], ['8', '8'], ['9', '9'], ['÷', '/', true], ['sin', 'sin('], ['cos', 'cos('], ['tan', 'tan('],
-              ['4', '4'], ['5', '5'], ['6', '6'], ['×', '*', true], ['ln', 'ln('], ['log', 'log('], ['e', 'e'],
-              ['1', '1'], ['2', '2'], ['3', '3'], ['−', '-', true], ['(', '('], [')', ')'], ['<', '<'],
-              ['0', '0'], ['.', '.'], [',', ','], ['+', '+', true], ['=', '='], ['>', '>'], ['⌫', 'bksp', true]
-            ].map(([label, val, special], i) => (
-              <button
-                key={i}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  if (val === 'bksp') handleKeypadBackspace();
-                  else handleKeypadInsert(val as string);
-                }}
-                className={`flex items-center justify-center h-8 md:h-10 text-[10px] md:text-sm font-medium rounded border border-gray-200 active:bg-gray-200 transition-colors ${
-                  special ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
-                }`}
-              >
-                {label}
+                <Calculator size={20} />
               </button>
-            ))}
-          </div>
-        </div>
-      </aside>
+            </header>
 
-      <main className="flex-1 relative bg-white cursor-grab active:cursor-grabbing h-[55vh] md:h-screen">
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              <AnimatePresence initial={false}>
+                {expressions.map((expr) => (
+                  <motion.div
+                    key={expr.id}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="bg-white border border-gray-200 p-2 rounded-lg shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setExpressions(prev => prev.map(e => e.id === expr.id ? { ...e, visible: !e.visible } : e));
+                        }}
+                        className="w-5 h-5 rounded-full shrink-0 border-2 transition-colors cursor-pointer"
+                        style={{ 
+                          backgroundColor: expr.visible ? expr.color : 'transparent',
+                          borderColor: expr.color
+                        }}
+                      />
+                      <input
+                        data-id={expr.id}
+                        className="flex-1 outline-none text-base md:text-lg font-medium expr-input"
+                        value={expr.text}
+                        onChange={(e) => handleUpdateText(expr.id, e.target.value)}
+                        onFocus={() => setActiveInputId(expr.id)}
+                        placeholder="e.g. x^2"
+                      />
+                      <button
+                        onClick={() => {
+                          setExpressions(prev => prev.filter(e => e.id !== expr.id));
+                          if (activeInputId === expr.id) setActiveInputId(null);
+                        }}
+                        className="text-gray-400 hover:text-red-500 px-1"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+                    {expr.error && (
+                      <div className="text-[12px] text-red-600 mt-1 font-medium bg-red-50 p-1 rounded">
+                        {expr.error}
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+
+            <button
+              onClick={() => addExpression('')}
+              className="m-3 flex items-center justify-center gap-2 py-2 md:py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all active:scale-95 shrink-0 shadow-md"
+            >
+              <Plus size={18} /> Add Expression
+            </button>
+
+        <AnimatePresence>
+          {isKeypadVisible && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="bg-white border-t border-gray-200 p-1 shrink-0 select-none overflow-hidden"
+            >
+              <div className="grid grid-cols-7 gap-1">
+                {[
+                  ['x', 'x', true], ['y', 'y', true], ['x²', '^2'], ['a^b', '^'], ['√', 'sqrt('], ['|a|', 'abs('], ['π', 'π'],
+                  ['7', '7'], ['8', '8'], ['9', '9'], ['÷', '/', true], ['sin', 'sin('], ['cos', 'cos('], ['tan', 'tan('],
+                  ['4', '4'], ['5', '5'], ['6', '6'], ['×', '*', true], ['ln', 'ln('], ['log', 'log('], ['e', 'e'],
+                  ['1', '1'], ['2', '2'], ['3', '3'], ['−', '-', true], ['(', '('], [')', ')'], ['<', '<'],
+                  ['0', '0'], ['.', '.'], [',', ','], ['+', '+', true], ['=', '='], ['>', '>'], ['⌫', 'bksp', true]
+                ].map(([label, val, special], i) => (
+                  <button
+                    key={i}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      if (val === 'bksp') handleKeypadBackspace();
+                      else handleKeypadInsert(val as string);
+                    }}
+                    className={`flex items-center justify-center h-8 md:h-10 text-[10px] md:text-sm font-medium rounded border border-gray-200 active:bg-gray-200 transition-colors ${
+                      special ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.aside>
+        )}
+      </AnimatePresence>
+
+      <main className="flex-1 relative bg-white cursor-grab active:cursor-grabbing h-full">
+        <motion.button
+          initial={false}
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="absolute top-4 left-4 z-50 w-14 h-14 flex items-center justify-center bg-white border border-gray-200 rounded-2xl shadow-xl hover:bg-gray-50 active:scale-95 transition-all text-blue-600 font-bold text-2xl select-none"
+          title={isSidebarOpen ? "Close Sidebar" : "Open Calculator"}
+        >
+          X
+        </motion.button>
+        
         <canvas
           ref={canvasRef}
           onWheel={handleWheel}
@@ -569,6 +606,7 @@ export default function App() {
           onMouseLeave={() => (isDragging.current = false)}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
+// @ts-ignore
           onTouchEnd={() => (isDragging.current = false)}
           className="w-full h-full touch-none"
         />
