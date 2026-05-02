@@ -1,0 +1,6 @@
+{
+  "name": "Graphing Calculator",
+  "description": "A high-performance interactive graphing calculator with real-time math expression rendering, custom keypad, and touch-responsive viewport controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
