@@ -1,6 +1,6 @@
 {
-  "name": "Graphing Calculator",
-  "description": "A high-performance interactive graphing calculator with real-time math expression rendering, custom keypad, and touch-responsive viewport controls.",
+  "name": "Learning Graph",
+  "description": "An interactive mathematical playground with AI-powered equation suggestions, real-time graphing, and a beautiful educational landing page.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
