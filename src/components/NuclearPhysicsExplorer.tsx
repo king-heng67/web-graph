@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
-import { ChevronLeft, RotateCcw, Sliders, HelpCircle, Info, Ruler } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Sliders, HelpCircle, Info, Ruler, Atom } from 'lucide-react';
 
 interface NuclearPhysicsExplorerProps {
   onBack: () => void;
@@ -482,25 +482,20 @@ export const NuclearPhysicsExplorer: React.FC<NuclearPhysicsExplorerProps> = ({ 
   }, [initialCount, halfLife, background, showCurve, finderY, isDragging]);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans p-4 sm:p-8 flex flex-col items-center">
-      <div className="max-w-5xl w-full bg-white shadow-xl border border-slate-200 overflow-hidden rounded-xl">
-        {/* Header */}
-        <div className="bg-slate-900 text-white p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="space-y-1">
-            <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight">IGCSE Physics Laboratory</h1>
-            <p className="text-slate-400 text-xs sm:text-sm font-medium tracking-wide">PRACTICAL SKILLS: ANALYSING DECAY GRAPHS</p>
-          </div>
-          <button 
-            onClick={onBack}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold uppercase transition-all"
-          >
-            <ChevronLeft size={14} /> Back to Hub
-          </button>
-        </div>
-
-        <div className="p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans p-6 lg:p-10 flex flex-col items-center">
+      <div className="max-w-[1600px] w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Chart Section */}
-          <div className="lg:col-span-7 flex flex-col gap-6">
+          <div className="lg:col-span-7 flex flex-col gap-8">
+            <div className="flex flex-col gap-2 mb-2">
+              <div className="flex items-center gap-4">
+                <div className="p-2.5 bg-emerald-600 rounded-xl shadow-lg shadow-emerald-600/20">
+                  <Atom size={24} className="text-white" />
+                </div>
+                <h1 className="text-2xl font-black uppercase tracking-tighter text-slate-900">Nuclear <span className="text-emerald-600">Physics Lab</span></h1>
+              </div>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.4em] ml-1">Analyse radioactive decay curves</p>
+            </div>
             <div className="relative bg-white border-2 border-slate-100 rounded-lg p-2 shadow-inner group">
               <div className="absolute top-4 right-4 flex gap-2 z-10">
                 <button 
@@ -601,6 +596,23 @@ export const NuclearPhysicsExplorer: React.FC<NuclearPhysicsExplorerProps> = ({ 
 
           {/* Teacher Sidebar */}
           <div className="lg:col-span-5 flex flex-col gap-8">
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={onBack}
+                className="flex items-center justify-center gap-3 px-6 py-4 bg-white hover:bg-slate-50 border-2 border-slate-100 rounded-3xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm active:scale-95 group text-slate-500 hover:text-emerald-600"
+              >
+                <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Exit to Hub
+              </button>
+              
+              <a 
+                href="/radiation_basics.html" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-3 px-6 py-4 bg-slate-900 hover:bg-black border-2 border-slate-800 rounded-3xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 group text-white"
+              >
+                <HelpCircle size={14} className="text-emerald-400" /> Learn Core Theory
+              </a>
+            </div>
             <div className="space-y-8">
               <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
                 <HelpCircle size={20} className="text-slate-400" />
@@ -612,31 +624,31 @@ export const NuclearPhysicsExplorer: React.FC<NuclearPhysicsExplorerProps> = ({ 
                 key={`${initialCount}-${halfLife}-${background}`}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-amber-50 p-6 rounded-xl border border-amber-200 shadow-sm space-y-4 relative overflow-hidden"
+                className="bg-amber-50 p-5 rounded-lg border border-amber-200 shadow-sm space-y-3 relative overflow-hidden"
               >
-                <div className="absolute top-0 right-0 w-16 h-16 bg-amber-100/50 rotate-45 translate-x-8 -translate-y-8" />
+                <div className="absolute top-0 right-0 w-12 h-12 bg-amber-100/50 rotate-45 translate-x-6 -translate-y-6" />
                 
-                <div className="space-y-4 relative z-10">
-                  <section className="space-y-2">
-                    <h3 className="font-bold text-[10px] uppercase tracking-widest text-amber-700">Model Analysis</h3>
-                    <p className="text-sm text-amber-900 leading-relaxed">
+                <div className="space-y-2 relative z-10">
+                  <section className="space-y-1">
+                    <h3 className="font-bold text-[8px] uppercase tracking-widest text-amber-700">Model Analysis</h3>
+                    <p className="text-[11px] text-amber-900 leading-relaxed font-medium">
                       {background === 0 ? (
-                        "Right now, you are looking at an ideal model. The curve smoothly approaches absolute zero. However, in a real exam question, this rarely happens because of background radiation from cosmic rays and rocks in the environment."
+                        "Right now, you are looking at an ideal model. The curve smoothly approaches absolute zero."
                       ) : (
                         <span>
-                          ⚠️ <strong>EXAM TRICK DETECTED!</strong> You added background radiation. Notice how the curve flattens out at <span className="font-bold underline">{background} cpm</span> instead of hitting zero? To find the half-life, you cannot just divide the initial count by 2. You must subtract the {background} baseline first, halve that number, and then add the baseline back. If you forget this in an exam, you will lose the marks!
+                          ⚠️ <strong>BASELINE DETECTED!</strong> Flattens at <span className="font-bold underline">{background} cpm</span>. Subtract baseline first, halve, then add back.
                         </span>
                       )}
                     </p>
                   </section>
 
-                  <section className="border-t border-amber-200/50 pt-4 space-y-2">
-                    <h3 className="font-bold text-[10px] uppercase tracking-widest text-amber-700">Isotope Properties</h3>
-                    <p className="text-sm text-amber-900 leading-relaxed italic">
+                  <section className="border-t border-amber-200/50 pt-2 space-y-1">
+                    <h3 className="font-bold text-[8px] uppercase tracking-widest text-amber-700">Isotope Properties</h3>
+                    <p className="text-[11px] text-amber-900 leading-relaxed italic">
                       {halfLife < 5 ? (
-                        "This isotope has a very short half-life. It is highly radioactive right now, but it will become safe relatively quickly."
+                        "Short half-life: highly radioactive now, but safe soon."
                       ) : (
-                        "This isotope decays slowly. Isotopes like this remain active in the environment for a long time, which is why nuclear waste must be stored carefully."
+                        "Decays slowly: remains active longer, requiring careful storage."
                       )}
                     </p>
                   </section>
@@ -648,42 +660,69 @@ export const NuclearPhysicsExplorer: React.FC<NuclearPhysicsExplorerProps> = ({ 
                 <motion.div 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-rose-50 p-6 rounded-xl border border-rose-100 space-y-3"
+                  className="bg-rose-50 p-4 rounded-lg border border-rose-100 space-y-2"
                 >
-                  <div className="flex items-center gap-2 text-rose-700 font-black text-[10px] uppercase tracking-widest">
-                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                  <div className="flex items-center gap-2 text-rose-700 font-black text-[9px] uppercase tracking-widest">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
                     Critical Exam Tip
                   </div>
-                  <p className="text-xs text-rose-800 leading-relaxed font-medium">
-                    Warning! The graph will not drop to zero because the room has a background radiation of <span className="font-bold">{background} cpm</span>. You must subtract this baseline before calculating the half-life!
+                  <p className="text-[11px] text-rose-800 leading-relaxed font-medium">
+                    Warning! Graph stays at <span className="font-bold">{background} cpm</span> due to background. Subtract baseline first!
                   </p>
                 </motion.div>
               )}
 
               {/* Static Content */}
-              <div className="space-y-6">
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-                  <h3 className="font-bold text-xs uppercase tracking-widest text-slate-700 mb-3">What is happening?</h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Radioactive decay is a **random** process. Unstable nuclei emit radiation (alpha, beta, or gamma) to become stable. We can never predict when a single atom will "pop" or decay.
-                  </p>
+              <div className="space-y-4">
+                <div className="bg-white p-5 rounded-xl border border-slate-200/60 shadow-sm relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-1 bg-emerald-500 h-full" />
+                  <div className="flex items-start gap-4 relative z-10">
+                    <div className="mt-1 p-2 bg-emerald-50 rounded-lg text-emerald-600 group-hover:scale-110 transition-transform">
+                      <Atom size={16} />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-black text-[9px] uppercase tracking-[0.2em] text-slate-400">The Physics State</h3>
+                        <span className="text-[8px] font-bold text-emerald-600 py-0.5 px-2 bg-emerald-50 rounded-full italic">Random Process</span>
+                      </div>
+                      <p className="text-[11px] text-slate-700 leading-relaxed font-medium">
+                        Radioactive decay is a <span className="text-emerald-700">random</span> process. Unstable atoms give off radiation to become stable, but we can't predict exactly when any single atom will decay.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-                  <h3 className="font-bold text-xs uppercase tracking-widest text-slate-700 mb-3">The Mathematical Pattern</h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    When you have billions of atoms, they follow a perfect mathematical pattern. The time it takes for exactly half of the unstable atoms to decay is always exactly the same. This is called the **Half-Life**.
-                  </p>
+                <div className="bg-white p-5 rounded-xl border border-slate-200/60 shadow-sm relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-1 bg-blue-500 h-full" />
+                  <div className="flex items-start gap-4 relative z-10">
+                    <div className="mt-1 p-2 bg-blue-50 rounded-lg text-blue-600 group-hover:scale-110 transition-transform">
+                      <Ruler size={16} />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-black text-[9px] uppercase tracking-[0.2em] text-slate-400">The Pattern</h3>
+                        <span className="text-[8px] font-bold text-blue-600 py-0.5 px-2 bg-blue-50 rounded-full italic">Half-Life</span>
+                      </div>
+                      <p className="text-[11px] text-slate-700 leading-relaxed font-medium">
+                        The <span className="text-blue-700">Half-Life</span> is the time it takes for half of the radioactive atoms to decay. This pattern stays exactly the same, no matter how many atoms you start with.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
               
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div className="mt-10 py-6 text-center text-[9px] font-bold text-slate-400 uppercase tracking-[0.5em]">
-        Analytical Physics Engine • Year 11 Module • Academic License
+      <div className="mt-8 flex flex-col items-center gap-3 opacity-40">
+        <div className="flex items-center gap-6">
+           <div className="h-px w-10 bg-slate-300" />
+           <div className="text-[9px] font-black text-slate-400 uppercase tracking-[0.6em]">Academic Unit v8.2 • Lab</div>
+           <div className="h-px w-10 bg-slate-300" />
+        </div>
+        <div className="text-[7px] font-bold text-slate-400 uppercase tracking-[0.4em]">Syllabus Core: Atoms, Nuclei & Radiation</div>
       </div>
     </div>
   );

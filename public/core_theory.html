@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuclear Core Theory | Interactive Physics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --rose: #f43f5e;
+            --emerald: #10b981;
+            --amber: #f59e0b;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-400: #94a3b8;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+            --slate-950: #020617;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--slate-950);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 320px;
+            background: var(--slate-900);
+            border-right: 1px solid var(--slate-800);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 320px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Typography */
+        h1 { font-size: 2rem; font-weight: 900; margin-bottom: 1rem; color: white; letter-spacing: -0.02em; }
+        p { color: var(--slate-400); line-height: 1.6; margin-bottom: 1.5rem; font-size: 0.95rem; }
+        .step-tag { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: var(--primary); margin-bottom: 0.5rem; display: block; }
+
+        /* The Stage */
+        .stage {
+            height: 60vh;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border-bottom: 1px solid var(--slate-800);
+            overflow: hidden;
+        }
+
+        .controls {
+            flex: 1;
+            padding: 3rem;
+            background: var(--slate-950);
+        }
+
+        /* Nuclear Simulator */
+        .nucleus-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .particle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            position: absolute;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.2rem;
+            box-shadow: inset -4px -4px 10px rgba(0,0,0,0.3);
+        }
+
+        .p-unit { background: radial-gradient(circle at 30% 30%, #f43f5e, #9f1239); color: white; }
+        .n-unit { background: radial-gradient(circle at 30% 30%, #94a3b8, #334155); color: white; }
+
+        /* Force Lines */
+        .force-line {
+            position: absolute;
+            height: 2px;
+            background: rgba(244, 63, 94, 0.3);
+            transform-origin: left center;
+            pointer-events: none;
+            display: none;
+        }
+
+        .force-strong {
+            border: 2px dashed rgba(16, 185, 129, 0.4);
+            background: transparent;
+            height: 0;
+            display: none;
+        }
+
+        /* Buttons */
+        .btn-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 2rem; }
+        .theory-btn {
+            background: var(--slate-900);
+            border: 1px solid var(--slate-800);
+            color: white;
+            padding: 1.25rem;
+            text-align: left;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .theory-btn:hover { border-color: var(--primary); background: var(--slate-800); transform: translateX(5px); }
+        .theory-btn.active { border-color: var(--primary); background: var(--slate-800); box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+        .theory-btn i { width: 30px; height: 30px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-style: normal; font-weight: 900; }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Grid */
+        .grid-overlay { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 30px 30px; }
+
+        @keyframes pulse-emerald {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .highlight-emerald { animation: pulse-emerald 2s infinite; }
+
+        @media (max-width: 1024px) {
+            body { flex-direction: column; }
+            .sidebar { position: relative; width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--slate-800); }
+            .main-content { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div style="margin-bottom: 2rem;">
+            <a href="radiation_basics.html" style="display: flex; align-items: center; gap: 8px; color: var(--slate-400); text-decoration: none; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">&larr; Back to Basics</a>
+        </div>
+        <span class="step-tag">Nuclear Physics</span>
+        <h1>Core Theory</h1>
+        <p>Before understanding decay, we must understand the "Tug of War" inside every atom. Why do some nuclei stick together while others explode?</p>
+        
+        <div class="btn-stack">
+            <button class="theory-btn active" onclick="showTopic('protons')">
+                The Proton (+1)
+            </button>
+            <button class="theory-btn" onclick="showTopic('repulsion')">
+                Electrostatic Repulsion
+            </button>
+            <button class="theory-btn" onclick="showTopic('strong')">
+                Strong Nuclear Force
+            </button>
+            <button class="theory-btn" onclick="showTopic('neutrons')">
+                Neutron Stabilizers
+            </button>
+        </div>
+
+        <div id="summary-text" class="info-box">
+            Protons have a positive charge. If you put them together, they want to fly apart!
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div style="padding: 1rem 3rem; background: var(--slate-900); display: flex; gap: 1.5rem; border-bottom: 1px solid var(--slate-800); align-items: center;">
+            <span style="color: var(--slate-600); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;">Lab Modules:</span>
+            <a href="decay_visualizer.html" style="color: var(--primary); text-decoration: none; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; border: 1px solid rgba(59, 130, 246, 0.3); padding: 4px 12px; border-radius: 6px;">Open Visualizer</a>
+        </div>
+        <div class="stage">
+            <div class="grid-overlay"></div>
+            <div id="nucleus" class="nucleus-container">
+                <!-- Particles will be rendered here -->
+            </div>
+            
+            <!-- Force markers -->
+            <div id="force-repel" class="force-line"></div>
+            <div id="force-strong" class="force-line force-strong"></div>
+        </div>
+
+        <div class="controls">
+            <div id="detailed-theory">
+                <h1>Electrostatic Force</h1>
+                <p>Coulomb's Law states that like charges repel. In a nucleus, protons are packed incredibly tight. The repulsive force trying to tear them apart is <strong>ENORMOUS</strong>.</p>
+                <p>Think of it like trying to hold two powerful magnets together with the same poles facing. They want to snap away from each other instantly.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const nucleus = document.getElementById('nucleus');
+        const summary = document.getElementById('summary-text');
+        const detail = document.getElementById('detailed-theory');
+
+        let particles = [];
+        let currentTopic = 'protons';
+
+        function createParticle(type, x, y) {
+            const p = document.createElement('div');
+            p.className = `particle ${type === 'p' ? 'p-unit' : 'n-unit'}`;
+            p.innerHTML = type === 'p' ? '+' : 'n';
+            p.style.transform = `translate(${x}px, ${y}px)`;
+            nucleus.appendChild(p);
+            return { type, x, y, el: p };
+        }
+
+        function clearNucleus() {
+            nucleus.innerHTML = '';
+            particles = [];
+        }
+
+        const topics = {
+            protons: {
+                summary: "Protons carry a +1 charge. They are the identity of the atom, but they are also the cause of its instability.",
+                detail: "<h1>The Proton Problem</h1><p>Every proton in the nucleus is pushing away every other proton. This is the <strong>Electromagnetic Force</strong>. As you add more protons to make heavier elements, this 'exploding force' grows stronger and stronger.</p>",
+                init: () => {
+                    clearNucleus();
+                    particles.push(createParticle('p', -40, 0));
+                    particles.push(createParticle('p', 40, 0));
+                }
+            },
+            repulsion: {
+                summary: "Without a counter-force, the nucleus would fly apart at nearly the speed of light.",
+                detail: "<h1>Electrostatic Repulsion</h1><p>The closer protons are, the harder they push. At nuclear distances, this force is millions of times stronger than the gravity we feel. Something must be holding them together...</p>",
+                init: () => {
+                    clearNucleus();
+                    const p1 = createParticle('p', -60, 0);
+                    const p2 = createParticle('p', 60, 0);
+                    particles.push(p1, p2);
+                    
+                    // Animate them pushing away slightly then snapping back?
+                    // No, let's just make them shake
+                    p1.el.style.animation = 'shake 0.1s infinite';
+                    p2.el.style.animation = 'shake 0.1s infinite';
+                }
+            },
+            strong: {
+                summary: "The Strong Nuclear Force is the most powerful force in the universe. It acts like 'Nuclear Glue'.",
+                detail: "<h1>The Strong Force</h1><p>This force only works at <strong>ultra-short distances</strong>. It attracts protons and neutrons together. It is much stronger than electricity, but only if the particles are touching.</p><p>If a nucleus gets too big, the protons on one side are too far from the protons on the other side for the Strong Force to reach them!</p>",
+                init: () => {
+                    clearNucleus();
+                    for(let i=0; i<6; i++) {
+                        const angle = (i / 6) * Math.PI * 2;
+                        const x = Math.cos(angle) * 35;
+                        const y = Math.sin(angle) * 35;
+                        const p = createParticle(i % 2 === 0 ? 'p' : 'n', x, y);
+                        p.el.classList.add('highlight-emerald');
+                        particles.push(p);
+                    }
+                }
+            },
+            neutrons: {
+                summary: "Neutrons act as 'Spacers' and 'Glue Providers'. They add Strong Force without adding Repulsion.",
+                detail: "<h1>The Role of Neutrons</h1><p>Neutrons have no charge (0), so they don't push protons away. However, they <strong>do</strong> provide Strong Force attraction. They act like a buffer that stabilizes the core.</p><p>This is why heavier atoms need <strong>more neutrons than protons</strong> to stay stable!</p>",
+                init: () => {
+                    clearNucleus();
+                    // Dense cluster
+                    const layout = [
+                        {t:'p', x:0, y:0},
+                        {t:'n', x:45, y:0},
+                        {t:'n', x:-45, y:0},
+                        {t:'n', x:22, y:40},
+                        {t:'n', x:-22, y:40},
+                        {t:'p', x:22, y:-40},
+                        {t:'p', x:-22, y:-40},
+                    ];
+                    layout.forEach(l => particles.push(createParticle(l.t, l.x, l.y)));
+                }
+            }
+        };
+
+        function showTopic(id) {
+            currentTopic = id;
+            document.querySelectorAll('.theory-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
+            summary.innerText = topics[id].summary;
+            detail.innerHTML = topics[id].detail;
+            topics[id].init();
+        }
+
+        // Initialize
+        topics.protons.init();
+
+    </script>
+
+    <style>
+        @keyframes shake {
+            0% { transform: translate(-2px, -2px) translateX(var(--tx, 0)) translateY(var(--ty, 0)); }
+            25% { transform: translate(2px, 1px); }
+            50% { transform: translate(-1px, 2px); }
+            75% { transform: translate(2px, -1px); }
+            100% { transform: translate(-2px, -2px); }
+        }
+        
+        /* Particle specific adjustment for shake combined with translate */
+        .particle {
+            --tx: 0px;
+            --ty: 0px;
+        }
+    </style>
+</body>
+</html>

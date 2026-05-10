@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decay Equation Visualizer | Interactive Physics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --rose: #f43f5e;
+            --emerald: #10b981;
+            --amber: #f59e0b;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-400: #94a3b8;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+            --slate-950: #020617;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--slate-50);
+            color: var(--slate-900);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* Layout */
+        .stage-area {
+            flex: 0 0 60vh;
+            background-color: var(--slate-950);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid var(--slate-800);
+            overflow: hidden;
+            min-height: 300px;
+        }
+
+        .controls-area {
+            flex: 1;
+            background: white;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.05);
+            z-index: 20;
+            min-height: 300px;
+        }
+
+        @media (max-width: 768px) {
+            .decay-container {
+                scale: 0.8;
+            }
+            .controls-area {
+                padding: 1.5rem;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+            .decay-btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .decay-container {
+                scale: 0.6;
+            }
+            .stage-area {
+                height: 40vh;
+            }
+        }
+
+        /* Math Stage Elements */
+        .grid-bg {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .decay-container {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            font-family: 'JetBrains Mono', monospace;
+            position: relative;
+            z-index: 10;
+        }
+
+        .nucleus-card {
+            background: rgba(255,255,255,0.02);
+            border: 2px solid rgba(255,255,255,0.1);
+            padding: 30px 50px;
+            border-radius: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+            min-width: 280px;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .nucleus-card.shaking { animation: shake-nuke 0.1s infinite; }
+        @keyframes shake-nuke {
+            0% { transform: translate(1px, 1px); }
+            50% { transform: translate(-1px, -2px); }
+            100% { transform: translate(1px, 1px); }
+        }
+
+        .indices {
+            display: flex;
+            flex-direction: column;
+            text-align: right;
+            font-size: 2.25rem;
+            line-height: 1;
+            font-weight: 800;
+            width: 80px;
+            color: white;
+            position: relative;
+            z-index: 10;
+        }
+
+        .symbol {
+            font-size: 6rem;
+            font-weight: 900;
+            color: white;
+            letter-spacing: -0.05em;
+            position: relative;
+            z-index: 10;
+            text-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .particle-cluster {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: center;
+            gap: 2px;
+            padding: 10px;
+            opacity: 0.3;
+            filter: blur(1px);
+        }
+
+        .p-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4facfe;
+        }
+
+        .n-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #94a3b8;
+        }
+
+        /* Math Indicators */
+        .math-delta {
+            position: absolute;
+            font-size: 1.5rem;
+            font-weight: 900;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: translateY(20px);
+        }
+
+        .delta-top { top: -20px; left: 30px; color: var(--rose); }
+        .delta-bottom { bottom: -20px; left: 30px; color: var(--amber); }
+
+        .delta-visible { opacity: 1; transform: translateY(0); }
+
+        /* Particle Ejection */
+        .ejected {
+            position: absolute;
+            left: 50%;
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+
+        .reaction-arrow {
+            font-size: 3rem;
+            color: rgba(255,255,255,0.2);
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        /* Controls UI */
+        .navigation-panel {
+            display: flex;
+            gap: 1.5rem;
+            flex: 1;
+        }
+
+        .step-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--slate-200);
+            background: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+            width: 120px;
+        }
+
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .nav-btn:not(:disabled):hover { background: var(--slate-100); border-color: var(--primary); }
+        .nav-btn.next { background: var(--primary); color: white; border: none; }
+        .nav-btn.next:not(:disabled):hover { background: var(--primary-dark); }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .back-nav {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            z-index: 100;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: var(--slate-400);
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .decay-btn {
+            flex: 1;
+            padding: 1.25rem;
+            border-radius: 1rem;
+            border: 2px solid var(--slate-100);
+            background: white;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 0.8rem;
+        }
+
+        .decay-btn:hover { border-color: var(--primary); background: var(--slate-50); transform: translateY(-2px); }
+        .decay-btn:active { transform: scale(0.98); }
+
+        .decay-btn.active-alpha { border-color: var(--rose); color: var(--rose); background: #fff1f2; }
+        .decay-btn.active-beta { border-color: var(--emerald); color: var(--emerald); background: #ecfdf5; }
+        .decay-btn.active-gamma { border-color: var(--primary); color: var(--primary); background: #eff6ff; }
+
+        .console-output {
+            background: var(--slate-50);
+            border-left: 6px solid var(--slate-200);
+            padding: 1.5rem;
+            border-radius: 0 1rem 1rem 0;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--slate-700);
+            line-height: 1.5;
+        }
+
+        .tag {
+            font-size: 0.65rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="stage-area">
+        <div class="back-nav">
+            <a href="radiation_basics.html" class="back-btn">&larr; Back to Basics</a>
+        </div>
+        <div class="grid-bg"></div>
+        <div class="decay-container">
+            <!-- Parent Nucleus -->
+            <div id="nucleus" class="nucleus-card">
+                <div class="lab-readout">
+                    <div class="indices">
+                        <span id="txt-top">238</span>
+                        <span id="txt-bottom">92</span>
+                    </div>
+                </div>
+                <div id="txt-sym" class="symbol">U</div>
+
+                <!-- Cluster Visual -->
+                <div class="particle-cluster" id="cluster-in">
+                    <!-- Particles by JS -->
+                </div>
+
+                <!-- Math working layers -->
+                <div id="delta-top" class="math-delta delta-top">-4</div>
+                <div id="delta-bottom" class="math-delta delta-bottom">-2</div>
+            </div>
+
+            <!-- Visual Flow -->
+            <div id="arrow" class="reaction-arrow">&rarr;</div>
+
+            <!-- Ejected Particle (Hidden initially) -->
+            <div id="particle-out" class="ejected">
+                <div class="nucleus-card small-nuke" style="min-width: 150px; padding: 15px 25px; scale: 0.7; background: rgba(255,255,255,0.05);">
+                    <div class="indices">
+                        <span id="p-top">4</span>
+                        <span id="p-bottom">2</span>
+                    </div>
+                    <div id="p-sym" class="symbol" style="font-size: 2.5rem;">He</div>
+                    <div class="particle-cluster" id="cluster-out"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls-area">
+        <div>
+            <span class="tag">Interactive Lab</span>
+            <div class="btn-group">
+                <button class="decay-btn" id="btn-alpha" onclick="selectType('alpha')">Alpha Decay</button>
+                <button class="decay-btn" id="btn-beta" onclick="selectType('beta')">Beta Decay</button>
+                <button class="decay-btn" id="btn-gamma" onclick="selectType('gamma')">Gamma Emission</button>
+            </div>
+        </div>
+
+        <div class="navigation-panel">
+            <div id="console" class="console-output">
+                Select a decay type to start the walkthrough.
+            </div>
+            <div class="step-controls">
+                <button class="nav-btn" id="prev-btn" onclick="prevStep()" disabled>&larr; Back</button>
+                <span id="step-indicator" style="font-size: 0.8rem; font-weight: 800; color: var(--slate-400); width: 80px; text-align: center;">-- / --</span>
+                <button class="nav-btn next" id="next-btn" onclick="nextStep()" disabled>Next &rarr;</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dom = {
+            txtTop: document.getElementById('txt-top'),
+            txtBottom: document.getElementById('txt-bottom'),
+            txtSym: document.getElementById('txt-sym'),
+            nucleus: document.getElementById('nucleus'),
+            deltaTop: document.getElementById('delta-top'),
+            deltaBottom: document.getElementById('delta-bottom'),
+            arrow: document.getElementById('arrow'),
+            pOut: document.getElementById('particle-out'),
+            pTop: document.getElementById('p-top'),
+            pBottom: document.getElementById('p-bottom'),
+            pSym: document.getElementById('p-sym'),
+            console: document.getElementById('console'),
+            prevBtn: document.getElementById('prev-btn'),
+            nextBtn: document.getElementById('next-btn'),
+            stepIndicator: document.getElementById('step-indicator')
+        };
+
+        const sequences = {
+            alpha: {
+                title: 'Alpha Decay',
+                color: 'var(--rose)',
+                initial: { top: '238', bottom: '92', sym: 'U' },
+                steps: [
+                    {
+                        msg: 'Unstable Uranium-238 nucleus. Constant "tug of war" between repulsion and strong nuclear force makes it unstable.',
+                        apply: () => {
+                            resetState('U', '238', '92');
+                            dom.nucleus.style.borderColor = 'var(--rose)';
+                        }
+                    },
+                    {
+                        msg: 'To reach stability, it must lose mass. An Alpha particle (2 protons, 2 neutrons) is prepared for ejection.',
+                        apply: () => {
+                            dom.deltaTop.innerText = '- 4';
+                            dom.deltaBottom.innerText = '- 2';
+                            dom.deltaTop.classList.add('delta-visible');
+                            dom.deltaBottom.classList.add('delta-visible');
+                            dom.arrow.style.opacity = '1';
+                        }
+                    },
+                    {
+                        msg: 'Ejection! The Alpha particle (Helium nucleus) shoots out. Notice the numbers on the side of the arrow.',
+                        apply: () => {
+                            dom.pTop.innerText = '4';
+                            dom.pBottom.innerText = '2';
+                            dom.pSym.innerText = 'He';
+                            showEjectedCluster('alpha');
+                            dom.pOut.style.opacity = '1';
+                            dom.pOut.style.transform = 'translateX(250px)';
+                        }
+                    },
+                    {
+                        msg: 'Conservation of Mass/Protons: Uranium (92 protons) becomes Thorium (90 protons). Total top: 234 + 4 = 238.',
+                        apply: () => {
+                            dom.txtTop.innerText = '234';
+                            dom.txtBottom.innerText = '90';
+                            dom.txtSym.innerText = 'Th';
+                            dom.deltaTop.classList.remove('delta-visible');
+                            dom.deltaBottom.classList.remove('delta-visible');
+                            dom.nucleus.style.borderColor = 'var(--slate-800)';
+                        }
+                    }
+                ]
+            },
+            beta: {
+                title: 'Beta Decay',
+                color: 'var(--emerald)',
+                initial: { top: '14', bottom: '6', sym: 'C' },
+                steps: [
+                    {
+                        msg: 'Carbon-14. It has too many neutrons compared to protons.',
+                        apply: () => {
+                            resetState('C', '14', '6');
+                            dom.nucleus.style.borderColor = 'var(--emerald)';
+                        }
+                    },
+                    {
+                        msg: 'A neutron turns into a proton! The identity of the atom is about to change.',
+                        apply: () => {
+                            dom.deltaTop.innerText = '- 0';
+                            dom.deltaBottom.innerText = '+ 1';
+                            dom.deltaTop.style.color = 'var(--slate-400)';
+                            dom.deltaBottom.style.color = 'var(--emerald)';
+                            dom.deltaTop.classList.add('delta-visible');
+                            dom.deltaBottom.classList.add('delta-visible');
+                            dom.arrow.style.opacity = '1';
+                        }
+                    },
+                    {
+                        msg: 'To conserve charge, a fast electron (Beta particle) is created and ejected.',
+                        apply: () => {
+                            dom.pTop.innerText = '0';
+                            dom.pBottom.innerText = '-1';
+                            dom.pSym.innerText = 'e';
+                            showEjectedCluster('beta');
+                            dom.pOut.style.opacity = '1';
+                            dom.pOut.style.transform = 'translateX(250px)';
+                        }
+                    },
+                    {
+                        msg: 'Atom becomes Nitrogen-14. Atomic number +1. Note: -1 (Beta) + 7 (Nitrogen) = 6 (Original Carbon).',
+                        apply: () => {
+                            dom.txtTop.innerText = '14';
+                            dom.txtBottom.innerText = '7';
+                            dom.txtSym.innerText = 'N';
+                            dom.deltaTop.classList.remove('delta-visible');
+                            dom.deltaBottom.classList.remove('delta-visible');
+                        }
+                    }
+                ]
+            },
+            gamma: {
+                title: 'Gamma Emission',
+                color: 'var(--primary)',
+                initial: { top: '60', bottom: '27', sym: 'Co*' },
+                steps: [
+                    {
+                        msg: 'Cobalt-60 in an "Excited" state (indicated by the *). It has surplus energy but correct protons/neutrons.',
+                        apply: () => {
+                            resetState('Co*', '60', '27');
+                            dom.nucleus.classList.add('shaking');
+                            dom.nucleus.style.borderColor = 'var(--primary)';
+                        }
+                    },
+                    {
+                        msg: 'It releases a high-frequency electromagnetic wave (Gamma ray) to calm down.',
+                        apply: () => {
+                            dom.deltaTop.innerText = '0';
+                            dom.deltaBottom.innerText = '0';
+                            dom.deltaTop.classList.add('delta-visible');
+                            dom.deltaBottom.classList.add('delta-visible');
+                            dom.arrow.style.opacity = '1';
+                        }
+                    },
+                    {
+                        msg: 'Gamma rays have no mass and no charge. They are pure energy.',
+                        apply: () => {
+                            dom.pTop.innerText = 'γ';
+                            dom.pBottom.innerText = '0';
+                            dom.pSym.innerText = '~';
+                            dom.pOut.style.opacity = '1';
+                            dom.pOut.style.transform = 'translateX(250px)';
+                        }
+                    },
+                    {
+                        msg: 'The atom is now stable Cobalt-60. No protons were lost, so it is the same element.',
+                        apply: () => {
+                            dom.txtSym.innerText = 'Co';
+                            dom.nucleus.classList.remove('shaking');
+                            dom.deltaTop.classList.remove('delta-visible');
+                            dom.deltaBottom.classList.remove('delta-visible');
+                        }
+                    }
+                ]
+            }
+        };
+
+        let activeType = null;
+        let currentStepIndex = -1;
+
+        function resetState(sym, top, bottom) {
+            dom.txtTop.innerText = top;
+            dom.txtBottom.innerText = bottom;
+            dom.txtSym.innerText = sym;
+            dom.nucleus.classList.remove('shaking');
+            dom.nucleus.style.borderColor = 'rgba(255,255,255,0.1)';
+            dom.deltaTop.classList.remove('delta-visible');
+            dom.deltaBottom.classList.remove('delta-visible');
+            dom.arrow.style.opacity = '0';
+            dom.pOut.style.opacity = '0';
+            dom.pOut.style.transform = 'translateX(0)';
+            dom.deltaTop.style.color = 'var(--rose)';
+            dom.deltaBottom.style.color = 'var(--rose)';
+
+            // Update cluster
+            updateCluster(parseInt(top), parseInt(bottom));
+            document.getElementById('cluster-out').innerHTML = '';
+        }
+
+        function updateCluster(mass, atomic) {
+            const container = document.getElementById('cluster-in');
+            container.innerHTML = '';
+            const protons = atomic;
+            const neutrons = mass - atomic;
+            
+            // Limit shown particles to keep UI clean
+            const maxShow = 60;
+            const ratio = mass > maxShow ? maxShow / mass : 1;
+            
+            for(let i=0; i < Math.floor(protons * ratio); i++) {
+                const d = document.createElement('div');
+                d.className = 'p-dot';
+                container.appendChild(d);
+            }
+            for(let i=0; i < Math.floor(neutrons * ratio); i++) {
+                const d = document.createElement('div');
+                d.className = 'n-dot';
+                container.appendChild(d);
+            }
+        }
+
+        function showEjectedCluster(type) {
+            const container = document.getElementById('cluster-out');
+            container.innerHTML = '';
+            if(type === 'alpha') {
+                for(let i=0; i<2; i++) {
+                    const p = document.createElement('div'); p.className = 'p-dot';
+                    container.appendChild(p);
+                    const n = document.createElement('div'); n.className = 'n-dot';
+                    container.appendChild(n);
+                }
+            } else if(type === 'beta') {
+                const p = document.createElement('div'); p.className = 'p-dot';
+                p.style.background = 'var(--amber)';
+                container.appendChild(p);
+            }
+        }
+
+        function selectType(type) {
+            activeType = type;
+            currentStepIndex = 0;
+            
+            document.querySelectorAll('.decay-btn').forEach(b => b.classList.remove('active-alpha', 'active-beta', 'active-gamma'));
+            document.getElementById(`btn-${type}`).classList.add(`active-${type}`);
+            
+            updateNavigation();
+            sequences[type].steps[currentStepIndex].apply();
+        }
+
+        function nextStep() {
+            if (!activeType || currentStepIndex >= sequences[activeType].steps.length - 1) return;
+            currentStepIndex++;
+            updateNavigation();
+            sequences[activeType].steps[currentStepIndex].apply();
+        }
+
+        function prevStep() {
+            if (!activeType || currentStepIndex <= 0) return;
+            currentStepIndex--;
+            updateNavigation();
+            
+            // For simplicity in re-applying state, we can just re-run all steps up to index
+            // In a small sequence like this, it's efficient enough to "replay" to current step
+            const seq = sequences[activeType];
+            resetState(seq.initial.sym, seq.initial.top, seq.initial.bottom);
+            for(let i=0; i<=currentStepIndex; i++) {
+                seq.steps[i].apply();
+            }
+        }
+
+        function updateNavigation() {
+            const seq = sequences[activeType];
+            const step = seq.steps[currentStepIndex];
+            
+            dom.console.innerText = step.msg;
+            dom.stepIndicator.innerText = `${currentStepIndex + 1} / ${seq.steps.length}`;
+            
+            dom.prevBtn.disabled = currentStepIndex === 0;
+            dom.nextBtn.disabled = currentStepIndex === seq.steps.length - 1;
+        }
+    </script>
+</body>
+</html>

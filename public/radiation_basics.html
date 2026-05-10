@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radiation Basics | Interactive Lesson</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --emerald: #10b981;
+            --rose: #f43f5e;
+            --amber: #f59e0b;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+            --slate-950: #020617;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--slate-50);
+            color: var(--slate-900);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* Layout Architecture */
+        .stage-pane {
+            flex: 0 0 60%;
+            background-color: var(--slate-950);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-right: 1px solid var(--slate-800);
+            min-height: 400px;
+        }
+
+        .console-pane {
+            flex: 1;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            padding: 3rem;
+            position: relative;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.05);
+            min-height: 100vh;
+        }
+
+        @media (max-width: 1024px) {
+            body {
+                flex-direction: column;
+            }
+            .stage-pane {
+                flex: 0 0 auto;
+                height: 50vh;
+                border-right: none;
+                border-bottom: 1px solid var(--slate-800);
+            }
+            .console-pane {
+                padding: 2rem;
+                min-height: auto;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .stage-pane {
+                height: 40vh;
+                min-height: 300px;
+            }
+            h1 {
+                font-size: 1.75rem;
+            }
+            .instruction-text {
+                font-size: 0.95rem;
+            }
+            .console-pane {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Stage Elements */
+        .grid-overlay {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .stage-content {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: var(--slate-100);
+            border-radius: 99px;
+            margin-bottom: 2.5rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 25%;
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Typography */
+        .step-tag {
+            font-weight: 900;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .instruction-text {
+            color: var(--slate-600);
+            font-size: 1.05rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        /* Animations Step 1: Decay Grid */
+        .decay-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .grid-atom {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, var(--rose), #9f1239);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.6rem;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            box-shadow: 0 4px 10px rgba(244, 63, 94, 0.3);
+        }
+
+        .grid-atom.stable {
+            background: var(--slate-400);
+            box-shadow: none;
+            transform: scale(0.9);
+        }
+
+        .grid-atom.decaying {
+            animation: atom-decay-pulse 0.5s infinite;
+        }
+
+        @keyframes atom-decay-pulse {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.2); filter: brightness(1.5); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+
+        .atom-label {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: white;
+            opacity: 0.5;
+            white-space: nowrap;
+        }
+
+        /* Animations Step 2: Shielding Slabs */
+        .shielding-stage {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            width: 95%;
+            max-width: 900px;
+            padding: 20px;
+        }
+
+        .shielding-row {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            align-items: center;
+            gap: 30px;
+            position: relative;
+        }
+
+        .shielding-label {
+            color: #94a3b8;
+            font-size: 0.75rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-align: right;
+        }
+
+        .material-slab {
+            height: 80px;
+            width: 100%;
+            border-radius: 8px;
+            position: relative;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            perspective: 1000px;
+        }
+
+        .blocker {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 40px;
+            z-index: 10;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .blocker-label {
+            transform: rotate(-90deg);
+            font-size: 9px;
+            font-weight: 900;
+            color: rgba(255,255,255,0.4);
+            white-space: nowrap;
+            text-transform: uppercase;
+        }
+
+        .slab-paper { background: #f8fafc; border-right: 4px solid #cbd5e1; width: 15px; left: 100px; }
+        .slab-al { background: linear-gradient(135deg, #cbd5e1, #94a3b8); border-right: 6px solid #64748b; width: 30px; left: 300px; }
+        .slab-lead { background: linear-gradient(135deg, #475569, #0f172a); border-right: 10px solid #020617; width: 60px; left: 500px; }
+
+        .particle-path {
+            position: absolute;
+            top: 50%;
+            left: -100px;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        /* Particles */
+        .alpha-particle {
+            width: 24px;
+            height: 24px;
+            background: var(--emerald);
+            border-radius: 50%;
+            box-shadow: 0 0 20px var(--emerald);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 900;
+            color: white;
+        }
+
+        .beta-particle {
+            width: 8px;
+            height: 8px;
+            background: var(--amber);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--amber);
+        }
+
+        .gamma-wave {
+            width: 60px;
+            height: 20px;
+            background: repeating-linear-gradient(90deg, transparent, var(--rose) 2px, transparent 4px);
+            opacity: 0.8;
+            filter: blur(1px);
+        }
+
+        /* Animations Step 3: Environment Scene */
+        .env-scene {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #020617;
+            overflow: hidden;
+        }
+
+        .mist-cloud {
+            position: absolute;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(15px);
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .light-streak {
+            position: absolute;
+            width: 1px;
+            height: 120px;
+            background: linear-gradient(to bottom, transparent, rgba(56, 189, 248, 0.6), white);
+            filter: drop-shadow(0 0 5px #38bdf8);
+            z-index: 12;
+            transform: rotate(20deg);
+        }
+
+        .banana-box {
+            position: absolute;
+            bottom: 30px;
+            right: 20%;
+            padding: 8px 14px;
+            background: rgba(251, 191, 36, 0.1);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 900;
+            z-index: 20;
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .banana-box::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #fbbf24;
+            border-radius: 50%;
+            animation: pulse-ring 2s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.8; box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+            70% { transform: scale(1.2); opacity: 0; box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
+            100% { transform: scale(0.8); opacity: 0.8; box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+        }
+
+        @keyframes float-up {
+            0% { transform: translateY(0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-400px) scale(0.5); opacity: 0; }
+        }
+
+        @keyframes streak-down {
+            0% { transform: translateY(-300px) rotate(15deg); opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateY(800px) rotate(15deg); opacity: 0; }
+        }
+
+        .env-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 25;
+        }
+
+        .env-label {
+            color: white;
+            font-weight: 900;
+            font-size: 2.5rem;
+            opacity: 0.15;
+            text-transform: uppercase;
+            letter-spacing: 0.4em;
+            text-align: center;
+        }
+
+        /* Animations Step 4: Equations Visualizer */
+        .quiz-container { text-align: center; width: 100%; }
+        
+        .tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; justify-content: start; flex-wrap: wrap; }
+        .tabs button { 
+            padding: 8px 16px; 
+            background: var(--slate-100); 
+            color: var(--slate-600); 
+            border: 1px solid var(--slate-200); 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 700; 
+            font-size: 0.75rem; 
+            transition: all 0.2s;
+        }
+        .tabs button:hover, .tabs button.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
+        .equation-stage { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 15px; 
+            font-family: 'JetBrains Mono', monospace; 
+            font-size: 1.5rem; 
+            color: white; 
+        }
+        
+        .nuclide { 
+            display: flex; 
+            align-items: center; 
+            background: rgba(255,255,255,0.05); 
+            padding: 15px 25px; 
+            border-radius: 16px; 
+            border: 1px solid rgba(255,255,255,0.1); 
+        }
+        .mass-atomic { 
+            display: flex; 
+            flex-direction: column; 
+            font-size: 1rem; 
+            text-align: right; 
+            margin-right: 12px; 
+            color: var(--slate-400); 
+            line-height: 1.1; 
+        }
+        .mass-atomic span:first-child { color: var(--primary); font-weight: 900; }
+        .nuclide .element { font-size: 2.8rem; font-weight: 900; }
+        
+        /* Input Styling */
+        .nuclide input[type="number"] { 
+            width: 65px; 
+            padding: 6px; 
+            background: rgba(0,0,0,0.3); 
+            border: 2px solid var(--slate-700); 
+            color: white; 
+            border-radius: 8px; 
+            font-family: inherit; 
+            font-size: 1.1rem; 
+            text-align: center; 
+            margin-bottom: 4px;
+            outline: none;
+        }
+        .nuclide input[type="number"]::placeholder { color: var(--slate-700); }
+        .nuclide input[type="number"].correct { border-color: var(--emerald); background: rgba(16, 185, 129, 0.1); }
+        .nuclide input[type="number"].wrong { border-color: var(--rose); background: rgba(244, 63, 94, 0.1); }
+        
+        .btn-check { 
+            background: var(--emerald); 
+            color: white; 
+            font-size: 0.9rem; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: 900; 
+            width: 100%; 
+            margin-top: 1.5rem; 
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s; 
+        }
+        .btn-check:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        
+        .workings-panel { 
+            background: var(--slate-50); 
+            padding: 1.25rem; 
+            border-radius: 12px; 
+            border-left: 4px solid var(--primary); 
+            text-align: left; 
+            margin-top: 1.5rem; 
+            color: var(--slate-700); 
+        }
+        .workings-panel h3 { 
+            margin-top: 0; 
+            color: var(--primary); 
+            font-size: 0.7rem; 
+            text-transform: uppercase; 
+            margin-bottom: 0.5rem; 
+            letter-spacing: 0.1em;
+        }
+        .hidden { display: none; }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .nav-link {
+            font-size: 0.7rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--slate-400);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+            background: var(--slate-50);
+        }
+
+        /* Controls */
+        .footer {
+            margin-top: auto;
+            display: flex;
+            gap: 1rem;
+        }
+
+        button {
+            padding: 1.25rem 2.5rem;
+            border-radius: 1rem;
+            border: none;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.85rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            flex: 1;
+            box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-ghost {
+            background: var(--slate-100);
+            color: var(--slate-600);
+        }
+
+        .btn-ghost:hover {
+            background: var(--slate-200);
+        }
+
+        .hidden { display: none; }
+
+        .stage-group {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Transition States */
+        .step-hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.8s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <section class="stage-pane">
+        <div class="grid-overlay"></div>
+        <div class="stage-content">
+            <!-- Step 1 Stage -->
+            <div id="stage-1" class="stage-group fade-in">
+                <div class="decay-grid" id="atoms-grid">
+                    <!-- Atoms generated by JS -->
+                </div>
+            </div>
+
+            <div id="stage-2" class="stage-group step-hidden fade-in" style="background: #020617;">
+                <div class="shielding-stage">
+                    <div class="shielding-row" style="opacity: 0.8;">
+                        <span class="shielding-label">Alpha</span>
+                        <div class="material-slab">
+                            <div class="blocker slab-paper"><span class="blocker-label">Paper</span></div>
+                            <div id="alpha-path" class="particle-path">
+                                <div class="alpha-particle">&alpha;</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="shielding-row" style="opacity: 0.8;">
+                        <span class="shielding-label">Beta</span>
+                        <div class="material-slab">
+                            <div class="blocker slab-al"><span class="blocker-label">Aluminum</span></div>
+                            <div id="beta-path" class="particle-path">
+                                <div class="beta-particle"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="shielding-row" style="opacity: 0.8;">
+                        <span class="shielding-label">Gamma</span>
+                        <div class="material-slab">
+                            <div class="blocker slab-lead"><span class="blocker-label">Lead</span></div>
+                            <div id="gamma-path" class="particle-path">
+                                <div class="gamma-wave"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="stage-3" class="stage-group step-hidden fade-in">
+                <div class="env-scene" id="env-scene">
+                    <div class="moon"></div>
+                    <div class="ground" id="ground-container">
+                        <!-- Rock layers by JS -->
+                    </div>
+                    <div class="house">
+                        <div class="window"></div>
+                        <div class="source-tag" style="top: -50px; left: 50%; transform: translateX(-50%);">Radon Gas (Granite)</div>
+                    </div>
+                    <div class="banana-box">Dietary Sources (K-40)</div>
+                    <div class="source-tag" style="top: 20px; left: 20px; color: var(--rose);">Cosmic Rays</div>
+                    <div class="env-overlay"><span class="env-label">Standard Background Radiation</span></div>
+                </div>
+            </div>
+
+            <!-- Step 4 Stage: Interactive Equation -->
+            <div id="stage-4" class="stage-group step-hidden fade-in">
+                <div class="quiz-container">
+                    <div class="equation-stage">
+                        <!-- Parent -->
+                        <div class="nuclide">
+                            <div class="mass-atomic"><span id="parent-mass">238</span><span id="parent-atomic">92</span></div>
+                            <div class="element" id="parent-element">U</div>
+                        </div>
+                        
+                        <div style="opacity: 0.5;">&rarr;</div>
+                        
+                        <!-- Daughter (User Input) -->
+                        <div class="nuclide" style="border: 2px dashed var(--slate-700); background: rgba(255,255,255,0.02);">
+                            <div class="mass-atomic">
+                                <input type="number" id="input-mass" placeholder="?" autocomplete="off">
+                                <input type="number" id="input-atomic" placeholder="?" autocomplete="off">
+                            </div>
+                            <div class="element" id="daughter-element">Th</div>
+                        </div>
+                        
+                        <div style="opacity: 0.5;">+</div>
+                        
+                        <!-- Particle -->
+                        <div class="nuclide">
+                            <div class="mass-atomic"><span id="particle-mass">4</span><span id="particle-atomic">2</span></div>
+                            <div class="element" id="particle-symbol" style="color: var(--emerald);">α</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <aside class="console-pane">
+        <div class="nav-links">
+            <a href="core_theory.html" class="nav-link">Core Theory</a>
+            <a href="decay_visualizer.html" class="nav-link">Visualizer</a>
+        </div>
+        <div class="progress-container">
+            <div id="progress" class="progress-fill"></div>
+        </div>
+
+        <div id="content-container" class="fade-in">
+            <!-- Step 1 Content -->
+            <div id="content-1" class="content-group">
+                <span class="step-tag">Phase 1: Atomic Instability</span>
+                <h1>Nuclear Decay</h1>
+                <p class="instruction-text">Radiation is a <strong>random process</strong>. Some nuclei have too much energy or an unbalanced ratio of neutrons to protons, making them unstable.</p>
+                <p class="instruction-text">The <strong>Activity</strong> of a source is the rate at which it decays, measured in <strong>Becquerels (Bq)</strong>. One Bq is one decay per second.</p>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 2rem;">
+                    <button class="math-btn" style="flex: 1; background: var(--rose); border: none;" onclick="triggerHalfLife()">
+                        Calculate Half-Life
+                    </button>
+                    <button class="math-btn" style="flex: 1; background: var(--slate-200); color: var(--slate-700); border: none;" onclick="initDecayGrid()">
+                        Reset Source
+                    </button>
+                </div>
+
+                <div id="hl-stats" class="explanation-box" style="margin-top: 0;">
+                    16 Unstable Nuclei. Each half-life, roughly half of the remaining unstable nuclei will decay.
+                </div>
+            </div>
+
+            <div id="content-2" class="content-group step-hidden">
+                <span class="step-tag">Phase 2: Interaction with Matter</span>
+                <h1>Ionizing Power</h1>
+                <p class="instruction-text">Radiation is <strong>Ionizing</strong>—it can knock electrons off atoms. However, it can be blocked by different materials depending on its momentum and mass.</p>
+                
+                <button class="math-btn" style="margin-bottom: 2rem; background: var(--slate-100); color: var(--slate-900); border: 1px solid var(--slate-200);" onclick="startStep2Anim()">
+                    Replay Shielding Simulation
+                </button>
+
+                <div class="explanation-box" style="margin-top: 0; background: var(--slate-900); border: 1px solid var(--slate-800); padding: 0;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; color: white; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--slate-800);">
+                                <th style="padding: 12px; color: white; opacity: 0.6;">Property</th>
+                                <th style="padding: 12px; color: var(--emerald);">Alpha</th>
+                                <th style="padding: 12px; color: var(--amber);">Beta</th>
+                                <th style="padding: 12px; color: var(--rose);">Gamma</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid var(--slate-800);">
+                                <td style="padding: 12px; font-weight: bold; color: white; opacity: 0.8;">Nature</td>
+                                <td style="padding: 12px;">Helium Nucleus</td>
+                                <td style="padding: 12px;">Fast Electron</td>
+                                <td style="padding: 12px;">Photon (EM)</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--slate-800);">
+                                <td style="padding: 12px; font-weight: bold; color: white; opacity: 0.8;">Mass</td>
+                                <td style="padding: 12px;">4 amu</td>
+                                <td style="padding: 12px;">1/1840 amu</td>
+                                <td style="padding: 12px;">Zero</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--slate-800);">
+                                <td style="padding: 12px; font-weight: bold; color: white; opacity: 0.8;">Speed</td>
+                                <td style="padding: 12px;">~5% c</td>
+                                <td style="padding: 12px;">~90% c</td>
+                                <td style="padding: 12px;">c (Light)</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 12px; font-weight: bold; color: white; opacity: 0.8;">Ionizing</td>
+                                <td style="padding: 12px; color: var(--emerald);">Very High</td>
+                                <td style="padding: 12px;">High</td>
+                                <td style="padding: 12px; color: var(--rose);">Low</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Step 3 Content -->
+            <div id="content-3" class="content-group step-hidden">
+                <span class="step-tag">Step 3: Environment</span>
+                <h1>Background Radiation</h1>
+                <p class="instruction-text">Radiation isn't just in labs. It's all around us right now! This constant low-level radiation is called <strong>Natural Background Radiation</strong>.</p>
+                <p class="instruction-text">It comes from the ground (Radon gas), space (Cosmic rays), and even the food you eat (Potassium-40 in bananas!). This is why sensors never read exactly zero.</p>
+            </div>
+
+            <!-- Step 4 Content -->
+            <!-- Step 4 Content -->
+            <div id="content-4" class="content-group step-hidden">
+                <span class="step-tag">Step 4: Mathematics</span>
+                <h1>Equation Workshop</h1>
+                <p class="instruction-text">Can you balance the numbers? The total mass and atomic number must be the same on both sides of the arrow.</p>
+                
+                <div class="tabs">
+                    <button id="tab-alpha" onclick="setQuiz('alpha')" class="active">Practice Alpha</button>
+                    <button id="tab-beta" onclick="setQuiz('beta')">Practice Beta</button>
+                    <button id="tab-gamma" onclick="setQuiz('gamma')">Practice Gamma</button>
+                </div>
+
+                <button class="btn-check" onclick="checkAnswer()">Check Answer</button>
+
+                <div id="workings-panel" class="workings-panel hidden">
+                    <h3>Mathematical Workings</h3>
+                    <p id="workings-text"></p>
+                    <p style="font-size: 0.8rem; margin-top: 1rem; font-style: italic; opacity: 0.7;">Keep practicing until you can predict the numbers in your head!</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <button id="btn-back" class="btn-ghost hidden">Back</button>
+            <button id="btn-next" class="btn-primary">Next Step</button>
+            <button id="btn-finish" class="btn-primary hidden" onclick="window.close()">Ready for the Lab?</button>
+        </div>
+    </aside>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 4;
+        let animationIntervals = [];
+
+        const progress = document.getElementById('progress');
+        const btnNext = document.getElementById('btn-next');
+        const btnBack = document.getElementById('btn-back');
+        const btnFinish = document.getElementById('btn-finish');
+
+        function clearAnimations() {
+            animationIntervals.forEach(clearInterval);
+            animationIntervals = [];
+        }
+
+        function updateUI() {
+            // Update Text Content
+            document.querySelectorAll('.content-group').forEach(c => c.classList.add('step-hidden'));
+            document.getElementById(`content-${currentStep}`).classList.remove('step-hidden');
+
+            // Update Stage Visuals
+            document.querySelectorAll('.stage-group').forEach(s => s.classList.add('step-hidden'));
+            document.getElementById(`stage-${currentStep}`).classList.remove('step-hidden');
+
+            // Update Progress
+            progress.style.width = `${(currentStep / totalSteps) * 100}%`;
+
+            // Update Buttons
+            btnBack.classList.toggle('hidden', currentStep === 1);
+            if (currentStep === totalSteps) {
+                btnNext.classList.add('hidden');
+                btnFinish.classList.remove('hidden');
+            } else {
+                btnNext.classList.remove('hidden');
+                btnFinish.classList.add('hidden');
+            }
+
+            // Start Animation for specific step
+            clearAnimations();
+            if (currentStep === 1) initDecayGrid();
+            if (currentStep === 2) startStep2Anim();
+            if (currentStep === 3) startStep3Anim();
+        }
+
+        // --- STEP 1: DECAY GRID ---
+        function initDecayGrid() {
+            const grid = document.getElementById('atoms-grid');
+            grid.innerHTML = '';
+            for(let i=0; i<16; i++) {
+                const atom = document.createElement('div');
+                atom.className = 'grid-atom';
+                atom.id = `atom-${i}`;
+                atom.innerHTML = 'U';
+                grid.appendChild(atom);
+            }
+            document.getElementById('hl-stats').innerText = '16 Unstable Atoms. Press the button to see a half-life in action!';
+        }
+
+        function triggerHalfLife() {
+            const unstable = Array.from(document.querySelectorAll('.grid-atom:not(.stable)'));
+            if(unstable.length === 0) {
+                document.getElementById('hl-stats').innerText = "All atoms are now stable Thorium!";
+                return;
+            }
+
+            const countToDecay = Math.ceil(unstable.length / 2);
+            const toDecay = [];
+            while(toDecay.length < countToDecay) {
+                const randomAtom = unstable[Math.floor(Math.random() * unstable.length)];
+                if(!toDecay.includes(randomAtom)) toDecay.push(randomAtom);
+            }
+
+            document.getElementById('hl-stats').innerText = `Decaying ${countToDecay} atoms...`;
+
+            toDecay.forEach(atom => {
+                atom.classList.add('decaying');
+                setTimeout(() => {
+                    atom.classList.remove('decaying');
+                    atom.classList.add('stable');
+                    atom.innerHTML = 'Th';
+                }, 1000);
+            });
+
+            setTimeout(() => {
+                const remaining = document.querySelectorAll('.grid-atom:not(.stable)').length;
+                document.getElementById('hl-stats').innerText = remaining > 0 
+                    ? `${remaining} Unstable Atoms remaining.` 
+                    : "0 Unstable Atoms! The nucleus is now stable.";
+            }, 1200);
+        }
+
+        // --- STEP 2: SHIELDING IMPACTS ---
+        function startStep2Anim() {
+            const configs = [
+                { id: 'alpha-path', target: 12, speed: 1.5 },
+                { id: 'beta-path', target: 35, speed: 3.5 },
+                { id: 'gamma-path', target: 80, speed: 5 }
+            ];
+
+            configs.forEach(cfg => {
+                const el = document.getElementById(cfg.id);
+                if (!el) return;
+
+                el.style.left = '-10%';
+                el.style.opacity = '1';
+                let x = -10;
+                
+                const interval = setInterval(() => {
+                    x += cfg.speed;
+                    el.style.left = x + '%';
+
+                    if (x >= cfg.target) {
+                        clearInterval(interval);
+                        if (cfg.id === 'gamma-path') {
+                             // Gamma passes through partially
+                             el.style.opacity = '0.4';
+                        }
+                    }
+                }, 16);
+                animationIntervals.push(interval);
+            });
+        }
+
+        // --- STEP 3: ENVIRONMENT SCENE ---
+        function startStep3Anim() {
+            const scene = document.getElementById('env-scene');
+            const ground = document.getElementById('ground-container');
+            
+            // Clear existing elements
+            scene.querySelectorAll('.star, .mist-cloud, .light-streak').forEach(el => el.remove());
+            ground.innerHTML = '';
+
+            // Stars
+            for(let i=0; i<60; i++) {
+                const s = document.createElement('div');
+                s.className = 'star';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.top = Math.random() * 70 + '%';
+                const size = Math.random() * 2 + 1 + 'px';
+                s.style.width = size;
+                s.style.height = size;
+                s.style.setProperty('--d', (3 + Math.random() * 3) + 's');
+                scene.appendChild(s);
+            }
+
+            const createMist = () => {
+                const m = document.createElement('div');
+                m.className = 'mist-cloud';
+                const fromHouse = Math.random() > 0.6;
+                m.style.left = fromHouse ? (16 + Math.random() * 12) + '%' : Math.random() * 100 + '%';
+                m.style.bottom = fromHouse ? '100px' : '90px';
+                const size = 30 + Math.random() * 50 + 'px';
+                m.style.width = size;
+                m.style.height = size;
+                m.style.animation = `float-up ${6 + Math.random() * 4}s ease-out forwards`;
+                scene.appendChild(m);
+                setTimeout(() => m.remove(), 10000);
+            };
+
+            const createStreak = () => {
+                const s = document.createElement('div');
+                s.className = 'light-streak';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.top = '-150px';
+                s.style.animation = `streak-down ${0.5 + Math.random() * 0.4}s linear forwards`;
+                scene.appendChild(s);
+                setTimeout(() => s.remove(), 1000);
+            };
+
+            const intervalMist = setInterval(createMist, 600);
+            const intervalStreaks = setInterval(createStreak, 1200);
+            
+            animationIntervals.push(intervalMist, intervalStreaks);
+        }
+
+        // --- MATH QUIZ LOGIC ---
+        const quizData = {
+            alpha: {
+                parent: { mass: 238, atomic: 92, symbol: 'U' },
+                daughter: { symbol: 'Th', mass: 234, atomic: 90 },
+                particle: { mass: 4, atomic: 2, symbol: 'α' },
+                workings: "Mass Number: 238 - 4 = 234. Atomic Number: 92 - 2 = 90. Alpha decay is heavy!"
+            },
+            beta: {
+                parent: { mass: 14, atomic: 6, symbol: 'C' },
+                daughter: { symbol: 'N', mass: 14, atomic: 7 },
+                particle: { mass: 0, atomic: -1, symbol: 'β' },
+                workings: "Mass Number: 14 - 0 = 14. Atomic Number: 6 - (-1) = 7. (Remember, a neutron turned into a proton, so the atomic number goes UP by 1!)"
+            },
+            gamma: {
+                parent: { mass: 60, atomic: 27, symbol: 'Co*' },
+                daughter: { symbol: 'Co', mass: 60, atomic: 27 },
+                particle: { mass: 0, atomic: 0, symbol: 'γ' },
+                workings: "Mass Number: 60 - 0 = 60. Atomic Number: 27 - 0 = 27. Gamma is pure energy, so no protons or neutrons are lost!"
+            }
+        };
+
+        let currentQuizType = 'alpha';
+
+        function setQuiz(type) {
+            currentQuizType = type;
+            const data = quizData[type];
+
+            // Update Tabs
+            document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${type}`).classList.add('active');
+
+            // Set Parent
+            document.getElementById('parent-mass').innerText = data.parent.mass;
+            document.getElementById('parent-atomic').innerText = data.parent.atomic;
+            document.getElementById('parent-element').innerText = data.parent.symbol;
+
+            // Set Daughter placeholder/symbol
+            document.getElementById('daughter-element').innerText = data.daughter.symbol;
+
+            // Set Particle
+            document.getElementById('particle-mass').innerText = data.particle.mass;
+            document.getElementById('particle-atomic').innerText = data.particle.atomic;
+            document.getElementById('particle-symbol').innerText = data.particle.symbol;
+
+            // Reset Inputs
+            const inputMass = document.getElementById('input-mass');
+            const inputAtomic = document.getElementById('input-atomic');
+            inputMass.value = '';
+            inputAtomic.value = '';
+            inputMass.classList.remove('correct', 'wrong');
+            inputAtomic.classList.remove('correct', 'wrong');
+
+            // Hide Workings
+            document.getElementById('workings-panel').classList.add('hidden');
+        }
+
+        function checkAnswer() {
+            const data = quizData[currentQuizType];
+            const inputMass = document.getElementById('input-mass');
+            const inputAtomic = document.getElementById('input-atomic');
+            const workingsPanel = document.getElementById('workings-panel');
+            const workingsText = document.getElementById('workings-text');
+
+            const massVal = parseInt(inputMass.value);
+            const atomicVal = parseInt(inputAtomic.value);
+
+            let isCorrect = true;
+
+            // Validate Mass
+            if (massVal === data.daughter.mass) {
+                inputMass.classList.add('correct');
+                inputMass.classList.remove('wrong');
+            } else {
+                inputMass.classList.add('wrong');
+                inputMass.classList.remove('correct');
+                isCorrect = false;
+            }
+
+            // Validate Atomic
+            if (atomicVal === data.daughter.atomic) {
+                inputAtomic.classList.add('correct');
+                inputAtomic.classList.remove('wrong');
+            } else {
+                inputAtomic.classList.add('wrong');
+                inputAtomic.classList.remove('correct');
+                isCorrect = false;
+            }
+
+            // Show Workings
+            workingsPanel.classList.remove('hidden');
+            workingsText.innerHTML = isCorrect 
+                ? `<span style="color: var(--emerald); font-weight: 900;">Correct!</span><br>${data.workings}`
+                : `<span style="color: var(--rose); font-weight: 900;">Try again.</span><br>${data.workings}`;
+        }
+
+        btnNext.addEventListener('click', () => {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateUI();
+                if(currentStep === 4) setQuiz('alpha');
+            }
+        });
+
+        btnBack.addEventListener('click', () => {
+            if (currentStep > 1) {
+                currentStep--;
+                updateUI();
+                if(currentStep === 4) setQuiz('alpha');
+            }
+        });
+
+        // Initialize
+        updateUI();
+    </script>
+</body>
+</html>

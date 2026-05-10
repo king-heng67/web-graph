@@ -1,6 +1,6 @@
 {
   "name": "Nuclayer: Physics Graph Studio",
-  "description": "An interactive IGCSE-level nuclear physics lab for exploring radioactive decay, half-life, and background radiation through dynamic graphing.",
+  "description": "An interactive physics lab for exploring radioactive decay and motion/acceleration through dynamic analytical graphing and live simulations.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

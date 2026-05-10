@@ -4,12 +4,13 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, X, Move, Calculator, Divide, Minus, Equal, Delete, ChevronLeft, ChevronRight, Target, ZoomIn, ZoomOut, Lightbulb, RefreshCw, Home, BookOpen, Brain, Sparkles, ArrowRight, Atom } from 'lucide-react';
+import { Plus, X, Move, Calculator, Divide, Minus, Equal, Delete, ChevronLeft, ChevronRight, Target, ZoomIn, ZoomOut, Lightbulb, RefreshCw, Home, BookOpen, Brain, Sparkles, ArrowRight, Atom, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type } from "@google/genai";
 import 'katex/dist/katex.min.css';
 import { InlineMath } from 'react-katex';
 import { NuclearPhysicsExplorer } from './components/NuclearPhysicsExplorer';
+import { AccelerationExplorer } from './components/AccelerationExplorer';
 
 interface Viewport {
   xMin: number;
@@ -125,7 +126,7 @@ export default function App() {
   const activeInputRef = useRef<number | null>(null);
   const [activeInputId, setActiveInputId] = useState<number | null>(null);
   const [activeExprId, setActiveExprId] = useState<number | null>(null);
-  const [view, setView] = useState<'landing' | 'calculator' | 'physics' | 'nuclear-physics'>('landing');
+  const [view, setView] = useState<'landing' | 'calculator' | 'physics' | 'nuclear-physics' | 'acceleration'>('landing');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isKeypadVisible, setIsKeypadVisible] = useState(true);
   const [showKeyPoints, setShowKeyPoints] = useState(false);
@@ -1243,6 +1244,10 @@ export default function App() {
     return <NuclearPhysicsExplorer onBack={() => setView('physics')} />;
   }
 
+  if (view === 'acceleration') {
+    return <AccelerationExplorer onBack={() => setView('physics')} />;
+  }
+
   if (view === 'physics') {
     return (
       <div className="min-h-[100dvh] bg-white text-gray-900 font-sans selection:bg-purple-100 flex flex-col items-center">
@@ -1315,14 +1320,31 @@ export default function App() {
                 </div>
               </motion.button>
               
-              {/* Future modules */}
-              <div className="w-full bg-gray-50/50 p-8 rounded-[2.5rem] border border-dashed border-gray-200 flex flex-col items-center justify-center grayscale opacity-60 text-center">
-                <div className="bg-white p-4 rounded-2xl text-gray-300 shadow-sm mb-4">
-                  <Target size={32} />
+              {/* Acceleration Option */}
+              <motion.button
+                whileHover={{ scale: 1.02, y: -4 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setView('acceleration')}
+                className="w-full bg-white p-8 rounded-[2.5rem] border border-gray-200/60 shadow-sm flex flex-col items-start text-left gap-6 group cursor-pointer transition-all hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5"
+              >
+                <div className="bg-blue-600 p-5 rounded-3xl text-white shadow-xl group-hover:bg-blue-700 group-hover:rotate-12 transition-all duration-500">
+                  <Zap size={42} />
                 </div>
-                <div className="font-bold text-lg text-gray-400">Quantum States</div>
-                <div className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2 bg-gray-100 px-3 py-1 rounded-full">Coming Soon</div>
-              </div>
+                <div>
+                  <div className="font-bold text-2xl text-gray-950 mb-2">Acceleration</div>
+                  <div className="text-xs text-gray-500 font-medium leading-relaxed mb-6">
+                    Analyze non-uniform motion and terminal velocity. Use real-time calculus to find instantaneous acceleration and distance.
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    <span className="px-3 py-1.5 bg-gray-50 text-gray-600 text-[9px] font-black uppercase tracking-widest rounded-lg border border-gray-100 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">V-T Gradient</span>
+                    <span className="px-3 py-1.5 bg-gray-50 text-gray-600 text-[9px] font-black uppercase tracking-widest rounded-lg border border-gray-100 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">Area Analysis</span>
+                  </div>
+                </div>
+                <div className="mt-auto pt-4 text-blue-600 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
+                  Launch Simulation <ArrowRight size={18} />
+                </div>
+              </motion.button>
 
               {/* Statistical Mechanics / Thermodynamics Placeholder */}
               <div className="w-full bg-gray-50/50 p-8 rounded-[2.5rem] border border-dashed border-gray-200 flex flex-col items-center justify-center grayscale opacity-60 text-center">
