@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
-import { ArrowLeft, RotateCcw, Sliders, HelpCircle, Info, Ruler, Zap, Activity, ArrowRight } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Sliders, HelpCircle, Info, Ruler, Zap, Activity, ArrowRight, BookOpen } from 'lucide-react';
 import 'katex/dist/katex.min.css';
 import { InlineMath } from 'react-katex';
 
@@ -551,12 +551,20 @@ export const AccelerationExplorer: React.FC<AccelerationExplorerProps> = ({ onBa
           {/* RIGHT SIDEBAR: Situation & Theory (5 Cols) */}
           <div className="lg:col-span-5 flex flex-col gap-10">
             
-            <button 
-              onClick={onBack}
-              className="flex items-center justify-center gap-3 px-6 py-4 bg-white hover:bg-slate-50 border-2 border-slate-100 rounded-3xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm active:scale-95 group text-slate-500 hover:text-blue-600"
-            >
-              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Exit to Experiments Hub
-            </button>
+            <div className="flex gap-4">
+              <button 
+                onClick={onBack}
+                className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-white hover:bg-slate-50 border-2 border-slate-100 rounded-3xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm active:scale-95 group text-slate-500 hover:text-blue-600"
+              >
+                <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back
+              </button>
+              <a 
+                href="acceleration_theory.html"
+                className="flex-[2] flex items-center justify-center gap-3 px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white border-2 border-purple-500 rounded-3xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-purple-200 active:scale-95 group"
+              >
+                <BookOpen size={16} className="group-hover:rotate-12 transition-transform" /> Learn Theory
+              </a>
+            </div>
             
             {/* Teacher's Guide / Situation Report */}
             <div className="space-y-6">

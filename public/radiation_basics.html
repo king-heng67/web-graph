@@ -209,205 +209,156 @@
             white-space: nowrap;
         }
 
-        /* Animations Step 2: Shielding Slabs */
-        .shielding-stage {
-            display: flex;
-            flex-direction: column;
-            gap: 40px;
+        /* New Step 2: Penetration Stage */
+        .penetration-stage {
+            background: #1e293b;
             width: 95%;
-            max-width: 900px;
-            padding: 20px;
-        }
-
-        .shielding-row {
-            display: grid;
-            grid-template-columns: 140px 1fr;
-            align-items: center;
-            gap: 30px;
+            max-width: 800px;
+            height: 350px;
             position: relative;
-        }
-
-        .shielding-label {
-            color: #94a3b8;
-            font-size: 0.75rem;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            text-align: right;
-        }
-
-        .material-slab {
-            height: 80px;
-            width: 100%;
-            border-radius: 8px;
-            position: relative;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 15px;
             overflow: hidden;
-            display: flex;
-            align-items: center;
-            perspective: 1000px;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
         }
-
-        .blocker {
+        
+        .wall {
             position: absolute;
             top: 0;
             height: 100%;
-            width: 40px;
-            z-index: 10;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 5;
         }
-
-        .blocker-label {
-            transform: rotate(-90deg);
-            font-size: 9px;
+        
+        .wall span {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
             font-weight: 900;
-            color: rgba(255,255,255,0.4);
-            white-space: nowrap;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
             text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
         }
-
-        .slab-paper { background: #f8fafc; border-right: 4px solid #cbd5e1; width: 15px; left: 100px; }
-        .slab-al { background: linear-gradient(135deg, #cbd5e1, #94a3b8); border-right: 6px solid #64748b; width: 30px; left: 300px; }
-        .slab-lead { background: linear-gradient(135deg, #475569, #0f172a); border-right: 10px solid #020617; width: 60px; left: 500px; }
-
-        .particle-path {
+        
+        #paper-wall { left: 40%; width: 6px; background: rgba(255,255,255,0.8); }
+        #aluminum-wall { left: 65%; width: 15px; background: #94a3b8; border-right: 2px solid #64748b; }
+        #lead-wall { left: 90%; width: 40px; background: #334155; border-right: 4px solid #0f172a; }
+        
+        .track {
             position: absolute;
-            top: 50%;
-            left: -100px;
-            transform: translateY(-50%);
+            width: 100%;
+            height: 100px;
             display: flex;
             align-items: center;
-            pointer-events: none;
-            z-index: 20;
         }
-
-        /* Particles */
-        .alpha-particle {
-            width: 24px;
-            height: 24px;
-            background: var(--emerald);
-            border-radius: 50%;
-            box-shadow: 0 0 20px var(--emerald);
+        
+        .particle {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
             font-weight: 900;
-            color: white;
+        }
+        
+        #alpha-particle { width: 32px; height: 32px; background: var(--emerald); border-radius: 50%; box-shadow: 0 0 20px var(--emerald); color: white; font-size: 14px; }
+        #beta-particle { width: 10px; height: 10px; background: var(--amber); border-radius: 50%; box-shadow: 0 0 15px var(--amber); }
+        #gamma-particle { width: 40px; height: 4px; background: var(--rose); border-radius: 2px; box-shadow: 0 0 15px var(--rose); }
+        
+        .impact {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle, white 0%, transparent 70%);
+            border-radius: 50%;
+            opacity: 0;
+            transform: scale(0);
+            z-index: 20;
+            pointer-events: none;
+        }
+        
+        .impact.explode { animation: ripple 0.5s ease-out forwards; }
+        @keyframes ripple {
+            0% { opacity: 1; transform: scale(0.2); }
+            100% { opacity: 0; transform: scale(2.5); }
         }
 
-        .beta-particle {
+        /* New Step 3: Background Radiation Stage */
+        .background-stage {
+            background: #020617;
+            width: 95%;
+            max-width: 850px;
+            height: 400px;
+            position: relative;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .geiger-counter {
+            width: 180px;
+            height: 120px;
+            background: #1e293b;
+            border: 4px solid #334155;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.1s;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        
+        .geiger-counter.flash {
+            background: var(--amber);
+            border-color: #fbbf24;
+            transform: scale(1.02);
+        }
+        
+        .screen {
+            background: #020617;
+            padding: 12px;
+            width: 85%;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem;
+            color: var(--emerald);
+            border-radius: 6px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+            text-shadow: 0 0 10px var(--emerald);
+        }
+        
+        .env-source {
+            position: absolute;
+            font-size: 3.5rem;
+            opacity: 0.2;
+            transition: opacity 0.3s;
+            filter: grayscale(1) invert(1);
+        }
+        
+        .env-source.active { opacity: 0.8; filter: none; }
+        
+        .source-cosmic { top: 30px; left: 50%; transform: translateX(-50%); }
+        .source-food { top: 50%; left: 60px; transform: translateY(-50%); }
+        .source-rock { bottom: 30px; right: 60px; }
+        
+        .rad-ping {
+            position: absolute;
             width: 8px;
             height: 8px;
             background: var(--amber);
             border-radius: 50%;
             box-shadow: 0 0 15px var(--amber);
-        }
-
-        .gamma-wave {
-            width: 60px;
-            height: 20px;
-            background: repeating-linear-gradient(90deg, transparent, var(--rose) 2px, transparent 4px);
-            opacity: 0.8;
-            filter: blur(1px);
-        }
-
-        /* Animations Step 3: Environment Scene */
-        .env-scene {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            background: #020617;
-            overflow: hidden;
-        }
-
-        .mist-cloud {
-            position: absolute;
-            background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
-            border-radius: 50%;
-            filter: blur(15px);
-            z-index: 20;
-            pointer-events: none;
-        }
-
-        .light-streak {
-            position: absolute;
-            width: 1px;
-            height: 120px;
-            background: linear-gradient(to bottom, transparent, rgba(56, 189, 248, 0.6), white);
-            filter: drop-shadow(0 0 5px #38bdf8);
-            z-index: 12;
-            transform: rotate(20deg);
-        }
-
-        .banana-box {
-            position: absolute;
-            bottom: 30px;
-            right: 20%;
-            padding: 8px 14px;
-            background: rgba(251, 191, 36, 0.1);
-            color: #fbbf24;
-            border: 1px solid rgba(251, 191, 36, 0.4);
-            border-radius: 8px;
-            font-size: 10px;
-            font-weight: 900;
-            z-index: 20;
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .banana-box::before {
-            content: '';
-            width: 8px;
-            height: 8px;
-            background: #fbbf24;
-            border-radius: 50%;
-            animation: pulse-ring 2s infinite;
-        }
-
-        @keyframes pulse-ring {
-            0% { transform: scale(0.8); opacity: 0.8; box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
-            70% { transform: scale(1.2); opacity: 0; box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
-            100% { transform: scale(0.8); opacity: 0.8; box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
-        }
-
-        @keyframes float-up {
-            0% { transform: translateY(0) scale(1); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateY(-400px) scale(0.5); opacity: 0; }
-        }
-
-        @keyframes streak-down {
-            0% { transform: translateY(-300px) rotate(15deg); opacity: 0; }
-            20% { opacity: 1; }
-            80% { opacity: 1; }
-            100% { transform: translateY(800px) rotate(15deg); opacity: 0; }
-        }
-
-        .env-overlay {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-            z-index: 25;
-        }
-
-        .env-label {
-            color: white;
-            font-weight: 900;
-            font-size: 2.5rem;
-            opacity: 0.15;
-            text-transform: uppercase;
-            letter-spacing: 0.4em;
-            text-align: center;
+            z-index: 5;
         }
 
         /* Animations Step 4: Equations Visualizer */
@@ -607,53 +558,39 @@
                 </div>
             </div>
 
-            <div id="stage-2" class="stage-group step-hidden fade-in" style="background: #020617;">
-                <div class="shielding-stage">
-                    <div class="shielding-row" style="opacity: 0.8;">
-                        <span class="shielding-label">Alpha</span>
-                        <div class="material-slab">
-                            <div class="blocker slab-paper"><span class="blocker-label">Paper</span></div>
-                            <div id="alpha-path" class="particle-path">
-                                <div class="alpha-particle">&alpha;</div>
-                            </div>
-                        </div>
+            <div id="stage-2" class="stage-group step-hidden fade-in">
+                <div class="penetration-stage">
+                    <div id="paper-wall" class="wall"><span>Paper</span></div>
+                    <div id="aluminum-wall" class="wall"><span>Aluminum</span></div>
+                    <div id="lead-wall" class="wall"><span>Lead Brick</span></div>
+
+                    <div class="track" style="top: 20px;">
+                        <div id="alpha-particle" class="particle">α</div>
+                        <div id="impact-alpha" class="impact" style="top: 50%; left: 40%; transform: translate(-50%, -50%);"></div>
                     </div>
 
-                    <div class="shielding-row" style="opacity: 0.8;">
-                        <span class="shielding-label">Beta</span>
-                        <div class="material-slab">
-                            <div class="blocker slab-al"><span class="blocker-label">Aluminum</span></div>
-                            <div id="beta-path" class="particle-path">
-                                <div class="beta-particle"></div>
-                            </div>
-                        </div>
+                    <div class="track" style="top: 120px;">
+                        <div id="beta-particle" class="particle"></div>
+                        <div id="impact-beta" class="impact" style="top: 50%; left: 65%; transform: translate(-50%, -50%);"></div>
                     </div>
 
-                    <div class="shielding-row" style="opacity: 0.8;">
-                        <span class="shielding-label">Gamma</span>
-                        <div class="material-slab">
-                            <div class="blocker slab-lead"><span class="blocker-label">Lead</span></div>
-                            <div id="gamma-path" class="particle-path">
-                                <div class="gamma-wave"></div>
-                            </div>
-                        </div>
+                    <div class="track" style="top: 220px;">
+                        <div id="gamma-particle" class="particle"></div>
+                        <div id="impact-gamma" class="impact" style="top: 50%; left: 90%; transform: translate(-50%, -50%);"></div>
                     </div>
                 </div>
             </div>
 
             <div id="stage-3" class="stage-group step-hidden fade-in">
-                <div class="env-scene" id="env-scene">
-                    <div class="moon"></div>
-                    <div class="ground" id="ground-container">
-                        <!-- Rock layers by JS -->
+                <div class="background-stage">
+                    <div class="env-source source-cosmic">🌌</div>
+                    <div class="env-source source-food">🍌</div>
+                    <div class="env-source source-rock">💎</div>
+
+                    <div id="geiger-counter" class="geiger-counter">
+                        <div class="screen"><span id="cpm-display">14</span> CPM</div>
+                        <div style="color: var(--slate-400); font-size: 0.6rem; margin-top: 8px; font-weight: 900; letter-spacing: 2px;">GEIGER COUNTER</div>
                     </div>
-                    <div class="house">
-                        <div class="window"></div>
-                        <div class="source-tag" style="top: -50px; left: 50%; transform: translateX(-50%);">Radon Gas (Granite)</div>
-                    </div>
-                    <div class="banana-box">Dietary Sources (K-40)</div>
-                    <div class="source-tag" style="top: 20px; left: 20px; color: var(--rose);">Cosmic Rays</div>
-                    <div class="env-overlay"><span class="env-label">Standard Background Radiation</span></div>
                 </div>
             </div>
 
@@ -805,7 +742,7 @@
         <div class="footer">
             <button id="btn-back" class="btn-ghost hidden">Back</button>
             <button id="btn-next" class="btn-primary">Next Step</button>
-            <button id="btn-finish" class="btn-primary hidden" onclick="window.close()">Ready for the Lab?</button>
+            <button id="btn-finish" class="btn-primary hidden" onclick="window.location.href='core_theory.html'">Ready for the Lab?</button>
         </div>
     </aside>
 
@@ -819,9 +756,13 @@
         const btnBack = document.getElementById('btn-back');
         const btnFinish = document.getElementById('btn-finish');
 
+        let currentCPM = 14;
+
         function clearAnimations() {
             animationIntervals.forEach(clearInterval);
             animationIntervals = [];
+            // Remove any leftover pings from step 3
+            document.querySelectorAll('.rad-ping').forEach(p => p.remove());
         }
 
         function updateUI() {
@@ -900,88 +841,130 @@
             }, 1200);
         }
 
-        // --- STEP 2: SHIELDING IMPACTS ---
+        // --- STEP 2: PENETRATION LOGIC ---
         function startStep2Anim() {
-            const configs = [
-                { id: 'alpha-path', target: 12, speed: 1.5 },
-                { id: 'beta-path', target: 35, speed: 3.5 },
-                { id: 'gamma-path', target: 80, speed: 5 }
+            const particles = [
+                { id: 'alpha-particle', impactId: 'impact-alpha', destination: 40, speed: 2 },
+                { id: 'beta-particle', impactId: 'impact-beta', destination: 65, speed: 5 },
+                { id: 'gamma-particle', impactId: 'impact-gamma', destination: 90, speed: 8 }
             ];
 
-            configs.forEach(cfg => {
-                const el = document.getElementById(cfg.id);
-                if (!el) return;
+            function runCycle() {
+                particles.forEach(p => {
+                    const el = document.getElementById(p.id);
+                    const impactEl = document.getElementById(p.impactId);
+                    if (!el || !impactEl) return;
 
-                el.style.left = '-10%';
-                el.style.opacity = '1';
-                let x = -10;
-                
-                const interval = setInterval(() => {
-                    x += cfg.speed;
-                    el.style.left = x + '%';
+                    // Reset
+                    el.style.left = '20px';
+                    el.style.opacity = '1';
+                    impactEl.classList.remove('explode');
+                    void impactEl.offsetWidth; // Force reflow
 
-                    if (x >= cfg.target) {
-                        clearInterval(interval);
-                        if (cfg.id === 'gamma-path') {
-                             // Gamma passes through partially
-                             el.style.opacity = '0.4';
+                    let pos = 20;
+                    const stageWidth = document.querySelector('.penetration-stage').offsetWidth;
+                    const destPx = (p.destination / 100) * stageWidth;
+
+                    const interval = setInterval(() => {
+                        pos += p.speed;
+                        el.style.left = pos + 'px';
+
+                        if (pos >= destPx) {
+                            clearInterval(interval);
+                            // Hide particle and show impact
+                            el.style.opacity = '0';
+                            impactEl.classList.add('explode');
                         }
-                    }
-                }, 16);
-                animationIntervals.push(interval);
-            });
-        }
-
-        // --- STEP 3: ENVIRONMENT SCENE ---
-        function startStep3Anim() {
-            const scene = document.getElementById('env-scene');
-            const ground = document.getElementById('ground-container');
-            
-            // Clear existing elements
-            scene.querySelectorAll('.star, .mist-cloud, .light-streak').forEach(el => el.remove());
-            ground.innerHTML = '';
-
-            // Stars
-            for(let i=0; i<60; i++) {
-                const s = document.createElement('div');
-                s.className = 'star';
-                s.style.left = Math.random() * 100 + '%';
-                s.style.top = Math.random() * 70 + '%';
-                const size = Math.random() * 2 + 1 + 'px';
-                s.style.width = size;
-                s.style.height = size;
-                s.style.setProperty('--d', (3 + Math.random() * 3) + 's');
-                scene.appendChild(s);
+                    }, 16);
+                    animationIntervals.push(interval);
+                });
             }
 
-            const createMist = () => {
-                const m = document.createElement('div');
-                m.className = 'mist-cloud';
-                const fromHouse = Math.random() > 0.6;
-                m.style.left = fromHouse ? (16 + Math.random() * 12) + '%' : Math.random() * 100 + '%';
-                m.style.bottom = fromHouse ? '100px' : '90px';
-                const size = 30 + Math.random() * 50 + 'px';
-                m.style.width = size;
-                m.style.height = size;
-                m.style.animation = `float-up ${6 + Math.random() * 4}s ease-out forwards`;
-                scene.appendChild(m);
-                setTimeout(() => m.remove(), 10000);
-            };
+            runCycle();
+            const mainInterval = setInterval(runCycle, 4000);
+            animationIntervals.push(mainInterval);
+        }
 
-            const createStreak = () => {
-                const s = document.createElement('div');
-                s.className = 'light-streak';
-                s.style.left = Math.random() * 100 + '%';
-                s.style.top = '-150px';
-                s.style.animation = `streak-down ${0.5 + Math.random() * 0.4}s linear forwards`;
-                scene.appendChild(s);
-                setTimeout(() => s.remove(), 1000);
-            };
-
-            const intervalMist = setInterval(createMist, 600);
-            const intervalStreaks = setInterval(createStreak, 1200);
+        // --- STEP 3: BACKGROUND RADIATION LOGIC ---
+        function startStep3Anim() {
+            const sources = [
+                { class: 'source-cosmic', label: 'Cosmic Ray' },
+                { class: 'source-food', label: 'Dietary (K-40)' },
+                { class: 'source-rock', label: 'Terrestrial' }
+            ];
             
-            animationIntervals.push(intervalMist, intervalStreaks);
+            const geiger = document.getElementById('geiger-counter');
+            const display = document.getElementById('cpm-display');
+            const stage = document.querySelector('.background-stage');
+
+            function createPing() {
+                if (currentStep !== 3) return;
+
+                const sourceIndex = Math.floor(Math.random() * sources.length);
+                const sourceConfig = sources[sourceIndex];
+                const sourceEl = document.querySelector('.' + sourceConfig.class);
+                
+                // Active feedback for source
+                sourceEl.classList.add('active');
+                setTimeout(() => sourceEl.classList.remove('active'), 500);
+
+                const ping = document.createElement('div');
+                ping.className = 'rad-ping';
+                
+                const stageRect = stage.getBoundingClientRect();
+                const sourceRect = sourceEl.getBoundingClientRect();
+                const counterRect = geiger.getBoundingClientRect();
+
+                // Starting position relative to stage
+                let startX = sourceRect.left - stageRect.left + sourceRect.width / 2;
+                let startY = sourceRect.top - stageRect.top + sourceRect.height / 2;
+
+                ping.style.left = startX + 'px';
+                ping.style.top = startY + 'px';
+                stage.appendChild(ping);
+
+                // Target position (center of geiger counter)
+                const targetX = counterRect.left - stageRect.left + counterRect.width / 2;
+                const targetY = counterRect.top - stageRect.top + counterRect.height / 2;
+
+                // Animate
+                const duration = 400 + Math.random() * 400;
+                const startTime = performance.now();
+
+                function animate(currentTime) {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+
+                    const curX = startX + (targetX - startX) * progress;
+                    const curY = startY + (targetY - startY) * progress;
+
+                    ping.style.left = curX + 'px';
+                    ping.style.top = curY + 'px';
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        ping.remove();
+                        // Hit effect
+                        geiger.classList.add('flash');
+                        currentCPM++;
+                        display.innerText = currentCPM;
+                        setTimeout(() => geiger.classList.remove('flash'), 100);
+                    }
+                }
+                requestAnimationFrame(animate);
+
+                // Schedule next ping
+                const nextDelay = 1000 + Math.random() * 1500;
+                const timeout = setTimeout(createPing, nextDelay);
+                animationIntervals.push(timeout); 
+                // Note: animationIntervals handles both intervals and timeouts in clearAnimations
+                // but strictly speaking clearInterval and clearTimeout are interchangeable in modern browsers.
+                // However, to be safe I'll use a specific tracking if needed.
+                // In my clearAnimations I use clearInterval which works for timeouts too.
+            }
+
+            createPing();
         }
 
         // --- MATH QUIZ LOGIC ---

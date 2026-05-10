@@ -141,6 +141,23 @@ export default function App() {
     yMax: 6,
   });
 
+  // Handle URL hash for initial view/navigation
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (['calculator', 'physics', 'nuclear-physics', 'acceleration'].includes(hash)) {
+      setView(hash as any);
+    }
+    
+    const handleHashChange = () => {
+      const newHash = window.location.hash.replace('#', '');
+      if (['calculator', 'physics', 'nuclear-physics', 'acceleration'].includes(newHash)) {
+        setView(newHash as any);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
   // Keep aspect ratio 1:1 on mount/resize
   useEffect(() => {
     const updateAspect = () => {
@@ -901,12 +918,29 @@ export default function App() {
     }
   }, [addExpression]);
   
+  const expressionsRef = useRef(expressions);
+  useEffect(() => {
+    expressionsRef.current = expressions;
+  }, [expressions]);
+
+  const lastErrorTimeRef = useRef(0);
+  const isSuggestingRef = useRef(false);
+  const hasAttemptedRef = useRef(false);
+
   const getAISuggestions = useCallback(async () => {
-    if (isSuggesting) return;
+    if (isSuggestingRef.current || hasAttemptedRef.current) return;
+    
+    // Safety check for rapid retries on error (wait 60s if we hit a serious error)
+    if (Date.now() - lastErrorTimeRef.current < 60000) {
+      return;
+    }
+
+    isSuggestingRef.current = true;
+    hasAttemptedRef.current = true;
     setIsSuggesting(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const currentContext = expressions.map(e => e.text).filter(t => t.trim()).join(", ");
+      const currentContext = expressionsRef.current.map(e => e.text).filter(t => t.trim()).join(", ");
       
       const prompt = `You are a mathematical consultant for a simple graphing calculator app. 
       The user currently has these expressions: [${currentContext || "none"}].
@@ -941,9 +975,27 @@ export default function App() {
       });
       
       const data = JSON.parse(response.text);
-      setSuggestions(data);
-    } catch (err) {
-      console.error("AI Suggestion Error:", err);
+      if (Array.isArray(data) && data.length > 0) {
+        setSuggestions(data);
+      }
+    } catch (err: any) {
+      // Extract error message for checking
+      const errorStr = typeof err === 'string' ? err : (err?.message || JSON.stringify(err));
+      
+      // Silence standard quota errors to keep console clean for users
+      const isQuotaError = errorStr.includes('429') || 
+                          errorStr.includes('RESOURCE_EXHAUSTED') || 
+                          (err?.status === 429) ||
+                          (err?.error?.code === 429);
+
+      if (!isQuotaError) {
+        console.error("AI Suggestion Error:", err);
+      }
+      
+      lastErrorTimeRef.current = Date.now();
+      // If we hit a 429, we don't clear hasAttemptedRef so we don't keep trying this session
+      // until remount or manual trigger (if added later).
+      
       // Fallback
       setSuggestions([
         { tex: 'x^2 + y^2 = 25', raw: 'x^2 + y^2 = 25' },
@@ -953,14 +1005,16 @@ export default function App() {
       ]);
     } finally {
       setIsSuggesting(false);
+      isSuggestingRef.current = false;
     }
-  }, [expressions, isSuggesting, viewport]);
+  }, []);
 
   useEffect(() => {
-    if (initialized.current && suggestions.length === 0) {
+    // Only attempt once per component lifecycle if empty
+    if (initialized.current && suggestions.length === 0 && !isSuggesting && !hasAttemptedRef.current) {
       getAISuggestions();
     }
-  }, [getAISuggestions, suggestions.length]);
+  }, [getAISuggestions, suggestions.length, isSuggesting]);
 
   const handleUpdateText = useCallback((id: number, text: string) => {
     setExpressions(prev => prev.map(expr => {
@@ -1214,19 +1268,7 @@ export default function App() {
                 </div>
               </motion.button>
 
-              {/* Placeholder Option */}
-              <div className="w-full bg-gray-100/50 p-5 rounded-[2rem] border border-transparent flex items-center justify-between opacity-60 grayscale cursor-not-allowed lg:col-span-2">
-                <div className="flex items-center gap-4">
-                  <div className="bg-gray-200 p-3 rounded-2xl text-gray-500 shadow-sm">
-                    <BookOpen size={24} />
-                  </div>
-                  <div className="text-left">
-                    <div className="font-bold text-gray-600">Algebra Basics</div>
-                    <div className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">Waitlist Module</div>
-                  </div>
-                </div>
-                <div className="text-[10px] font-black text-gray-300 hidden sm:block uppercase tracking-widest">Coming Soon</div>
-              </div>
+
             </div>
           </motion.div>
         </div>
@@ -1315,8 +1357,17 @@ export default function App() {
                     <span className="px-3 py-1.5 bg-gray-50 text-gray-600 text-[9px] font-black uppercase tracking-widest rounded-lg border border-gray-100 group-hover:bg-purple-50 group-hover:text-purple-600 transition-colors">Half-Life</span>
                   </div>
                 </div>
-                <div className="mt-auto pt-4 text-purple-600 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
-                  Open Graphs <ArrowRight size={18} />
+                <div className="mt-auto pt-4 flex gap-4 w-full">
+                  <div className="flex-1 text-purple-600 font-bold text-xs flex items-center gap-2 group-hover:gap-3 transition-all">
+                    Open Lab <ArrowRight size={16} />
+                  </div>
+                  <a 
+                    href="core_theory.html"
+                    onClick={(e) => e.stopPropagation()}
+                    className="px-4 py-2 bg-purple-50 text-purple-600 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-purple-600 hover:text-white transition-all shadow-sm"
+                  >
+                    Theory
+                  </a>
                 </div>
               </motion.button>
               
@@ -1341,8 +1392,17 @@ export default function App() {
                     <span className="px-3 py-1.5 bg-gray-50 text-gray-600 text-[9px] font-black uppercase tracking-widest rounded-lg border border-gray-100 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">Area Analysis</span>
                   </div>
                 </div>
-                <div className="mt-auto pt-4 text-blue-600 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
-                  Launch Simulation <ArrowRight size={18} />
+                <div className="mt-auto pt-4 flex gap-4 w-full">
+                  <div className="flex-1 text-blue-600 font-bold text-xs flex items-center gap-2 group-hover:gap-3 transition-all">
+                    Launch Lab <ArrowRight size={16} />
+                  </div>
+                  <a 
+                    href="acceleration_theory.html"
+                    onClick={(e) => e.stopPropagation()}
+                    className="px-4 py-2 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                  >
+                    Theory
+                  </a>
                 </div>
               </motion.button>
 
