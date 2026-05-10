@@ -1,6 +1,6 @@
 {
-  "name": "Learning Graph",
-  "description": "An interactive mathematical playground with AI-powered equation suggestions, real-time graphing, and a beautiful educational landing page.",
+  "name": "Nuclayer: Physics Graph Studio",
+  "description": "An interactive IGCSE-level nuclear physics lab for exploring radioactive decay, half-life, and background radiation through dynamic graphing.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

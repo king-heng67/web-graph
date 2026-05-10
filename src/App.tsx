@@ -4,11 +4,12 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, X, Move, Calculator, Divide, Minus, Equal, Delete, ChevronLeft, ChevronRight, Target, ZoomIn, ZoomOut, Lightbulb, RefreshCw, Home, BookOpen, Brain, Sparkles, ArrowRight } from 'lucide-react';
+import { Plus, X, Move, Calculator, Divide, Minus, Equal, Delete, ChevronLeft, ChevronRight, Target, ZoomIn, ZoomOut, Lightbulb, RefreshCw, Home, BookOpen, Brain, Sparkles, ArrowRight, Atom } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type } from "@google/genai";
 import 'katex/dist/katex.min.css';
 import { InlineMath } from 'react-katex';
+import { NuclearPhysicsExplorer } from './components/NuclearPhysicsExplorer';
 
 interface Viewport {
   xMin: number;
@@ -124,7 +125,7 @@ export default function App() {
   const activeInputRef = useRef<number | null>(null);
   const [activeInputId, setActiveInputId] = useState<number | null>(null);
   const [activeExprId, setActiveExprId] = useState<number | null>(null);
-  const [view, setView] = useState<'landing' | 'calculator'>('landing');
+  const [view, setView] = useState<'landing' | 'calculator' | 'physics' | 'nuclear-physics'>('landing');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isKeypadVisible, setIsKeypadVisible] = useState(true);
   const [showKeyPoints, setShowKeyPoints] = useState(false);
@@ -820,10 +821,16 @@ export default function App() {
     const handleResize = () => {
       const canvas = canvasRef.current;
       if (canvas && canvas.parentElement) {
-        // Use ResizeObserver for more reliable size detection
-        canvas.width = canvas.parentElement.clientWidth * (window.devicePixelRatio || 1);
-        canvas.height = canvas.parentElement.clientHeight * (window.devicePixelRatio || 1);
-        render();
+        const dpr = window.devicePixelRatio || 1;
+        const width = canvas.parentElement.clientWidth;
+        const height = canvas.parentElement.clientHeight;
+        
+        // Only trigger update if size actually changed to avoid redundant renders
+        if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
+          canvas.width = width * dpr;
+          canvas.height = height * dpr;
+          render();
+        }
       }
     };
     
@@ -1126,68 +1133,218 @@ export default function App() {
 
   if (view === 'landing') {
     return (
-      <div className="min-h-screen bg-gray-50 text-gray-900 font-sans selection:bg-blue-100 flex flex-col items-center">
-        <div className="flex-1 flex flex-col items-center justify-center max-w-sm w-full py-12 px-6">
+      <div className="min-h-[100dvh] bg-gray-50 text-gray-900 font-sans selection:bg-blue-100 flex flex-col items-center">
+        <div className="flex-1 flex flex-col items-center justify-center w-full max-w-6xl py-8 sm:py-12 px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="w-full"
+            className="w-full max-w-sm sm:max-w-md lg:max-w-4xl"
           >
-            <div className="text-center mb-12">
-              <h1 className="text-4xl font-bold tracking-tight text-gray-950 mb-2">
-                Learning Graph
+            <div className="text-center mb-8 sm:mb-12">
+              <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold tracking-tight text-gray-950 mb-2 sm:mb-4 leading-tight">
+                Learning <span className="text-blue-600">Graph</span>
               </h1>
-              <p className="text-gray-500 font-medium">Select a learning module</p>
+              <p className="text-sm sm:text-base lg:text-lg text-gray-500 font-medium max-w-xs sm:max-w-md mx-auto">
+                Interactive analytical playground. Select a module to begin your discovery.
+              </p>
             </div>
 
-            <div className="space-y-4 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full">
               {/* Active Option: Graphing Calculator */}
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setView('calculator')}
-                className="w-full bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between group cursor-pointer"
+                className="w-full bg-white p-5 sm:p-6 lg:p-8 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between group cursor-pointer lg:flex-col lg:items-start lg:gap-6"
               >
-                <div className="flex items-center gap-4">
-                  <div className="bg-gray-900 p-3 rounded-2xl text-white shadow-lg group-hover:bg-blue-600 transition-colors">
+                <div className="flex items-center gap-4 lg:w-full lg:justify-between">
+                  <div className="bg-gray-900 p-3 sm:p-4 rounded-2xl text-white shadow-lg group-hover:bg-blue-600 transition-colors">
                     <Calculator size={24} />
                   </div>
-                  <div className="text-left">
-                    <div className="font-bold text-gray-950">Graphing Calculator</div>
-                    <div className="text-xs text-gray-400 font-medium uppercase tracking-wider">Explore Functions</div>
+                  <div className="text-left flex-1 lg:hidden">
+                    <div className="font-bold text-gray-950 text-base sm:text-lg text-nowrap truncate">Graphing Calculator</div>
+                    <div className="text-[10px] sm:text-xs text-gray-400 font-medium uppercase tracking-wider">Explore Functions</div>
                   </div>
+                  <ChevronRight className="text-gray-300 group-hover:text-blue-600 transition-colors lg:hidden" size={20} />
+                  <div className="hidden lg:block bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Active Tool</div>
                 </div>
-                <ChevronRight className="text-gray-300 group-hover:text-blue-600 transition-colors" size={20} />
+                
+                <div className="hidden lg:block text-left">
+                  <h3 className="font-bold text-2xl text-gray-950 mb-2">Graphing Calculator</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    Powerful dynamic environment for analyzing explicit and implicit functions with high precision.
+                  </p>
+                </div>
+                
+                <div className="hidden lg:flex items-center gap-2 text-blue-600 font-bold text-sm">
+                  Launch Engine <ArrowRight size={16} />
+                </div>
               </motion.button>
 
-              {/* Placeholder Options */}
-              {[
-                { title: "Geometry Explorer", icon: <Brain size={24} />, tag: "Coming Soon" },
-                { title: "Algebra Basics", icon: <BookOpen size={24} />, tag: "Waitlist" }
-              ].map((item, idx) => (
-                <div 
-                  key={idx}
-                  className="w-full bg-gray-100/50 p-5 rounded-[2rem] border border-transparent flex items-center justify-between opacity-60 grayscale cursor-not-allowed"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="bg-gray-200 p-3 rounded-2xl text-gray-500 shadow-sm">
-                      {item.icon}
-                    </div>
-                    <div className="text-left">
-                      <div className="font-bold text-gray-600">{item.title}</div>
-                      <div className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">{item.tag}</div>
-                    </div>
+              {/* Physics Option */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setView('physics')}
+                className="w-full bg-white p-5 sm:p-6 lg:p-8 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between group cursor-pointer lg:flex-col lg:items-start lg:gap-6"
+              >
+                <div className="flex items-center gap-4 lg:w-full lg:justify-between">
+                  <div className="bg-purple-600 p-3 sm:p-4 rounded-2xl text-white shadow-lg group-hover:bg-purple-700 transition-colors">
+                    <Sparkles size={24} />
+                  </div>
+                  <div className="text-left flex-1 lg:hidden text-nowrap truncate">
+                    <div className="font-bold text-gray-950 text-base sm:text-lg">Physics Lab</div>
+                    <div className="text-[10px] sm:text-xs text-gray-400 font-medium uppercase tracking-wider">Scientific Exploration</div>
+                  </div>
+                  <ChevronRight className="text-gray-300 group-hover:text-purple-600 transition-colors lg:hidden" size={20} />
+                  <div className="hidden lg:block bg-purple-50 text-purple-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Simulation</div>
+                </div>
+
+                <div className="hidden lg:block text-left">
+                  <h3 className="font-bold text-2xl text-gray-950 mb-2">Physics Simulations</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    Explore the laws of nature through interactive modules for nuclear physics and quantum mechanics.
+                  </p>
+                </div>
+                
+                <div className="hidden lg:flex items-center gap-2 text-purple-600 font-bold text-sm">
+                  Enter Laboratory <ArrowRight size={16} />
+                </div>
+              </motion.button>
+
+              {/* Placeholder Option */}
+              <div className="w-full bg-gray-100/50 p-5 rounded-[2rem] border border-transparent flex items-center justify-between opacity-60 grayscale cursor-not-allowed lg:col-span-2">
+                <div className="flex items-center gap-4">
+                  <div className="bg-gray-200 p-3 rounded-2xl text-gray-500 shadow-sm">
+                    <BookOpen size={24} />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-bold text-gray-600">Algebra Basics</div>
+                    <div className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">Waitlist Module</div>
                   </div>
                 </div>
-              ))}
+                <div className="text-[10px] font-black text-gray-300 hidden sm:block uppercase tracking-widest">Coming Soon</div>
+              </div>
             </div>
           </motion.div>
         </div>
         
-        <footer className="w-full max-w-sm flex flex-col items-center gap-4 py-10 px-6">
-          <div className="text-[10px] text-gray-300 font-black uppercase tracking-[0.4em]">
-            Visual Math Tool • 2024
+        <footer className="w-full max-w-sm sm:max-w-md lg:max-w-4xl flex flex-col items-center gap-4 py-8 sm:py-12 px-6">
+          <div className="text-[10px] text-gray-300 font-black uppercase tracking-[0.4em] text-center">
+            Vite Powered Analytical Suite • 2024
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
+  if (view === 'nuclear-physics') {
+    return <NuclearPhysicsExplorer onBack={() => setView('physics')} />;
+  }
+
+  if (view === 'physics') {
+    return (
+      <div className="min-h-[100dvh] bg-white text-gray-900 font-sans selection:bg-purple-100 flex flex-col items-center">
+        {/* Navigation Header */}
+        <header className="w-full max-w-6xl py-6 px-6 sm:px-8 flex items-center justify-between shrink-0">
+          <motion.button
+            whileHover={{ x: -2 }}
+            onClick={() => setView('landing')}
+            className="flex items-center gap-2 text-gray-500 font-bold text-xs uppercase tracking-widest hover:text-purple-600 transition-colors"
+          >
+            <ChevronLeft size={16} /> Back to Hub
+          </motion.button>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 hidden sm:block">Analytical Labs</span>
+            <div className="bg-purple-100 p-2.5 rounded-xl text-purple-600">
+              <Sparkles size={20} />
+            </div>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <div className="flex-1 w-full max-w-6xl px-6 sm:px-8 py-4 sm:py-12 overflow-y-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start"
+          >
+            {/* Left Column: Hero Text */}
+            <div className="lg:col-span-5 pt-4">
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-gray-950 mb-6 leading-[1.1]">
+                Physics <span className="text-purple-600">Explorations</span>
+              </h1>
+              <p className="text-base sm:text-lg text-gray-500 font-medium leading-relaxed mb-8 max-w-md">
+                Visualize complex physical phenomena through dynamic analytical graphing. Explore the mathematical foundations of the universe.
+              </p>
+              
+              <div className="flex items-center gap-4 p-4 bg-purple-50 rounded-2xl border border-purple-100/50 max-w-xs">
+                <Brain className="text-purple-600 shrink-0" size={20} />
+                <p className="text-[11px] text-purple-700 font-bold uppercase tracking-wider leading-tight">
+                  Graphing integration active
+                </p>
+              </div>
+            </div>
+
+            {/* Right Column: Module Grid */}
+            <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+              {/* Nuclear Physics Option */}
+              <motion.button
+                whileHover={{ scale: 1.02, y: -4 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setView('nuclear-physics')}
+                className="w-full bg-white p-8 rounded-[2.5rem] border border-gray-200/60 shadow-sm flex flex-col items-start text-left gap-6 group cursor-pointer transition-all hover:border-purple-200 hover:shadow-xl hover:shadow-purple-500/5"
+              >
+                <div className="bg-purple-600 p-5 rounded-3xl text-white shadow-xl group-hover:bg-purple-700 group-hover:rotate-12 transition-all duration-500">
+                  <Atom size={42} />
+                </div>
+                <div>
+                  <div className="font-bold text-2xl text-gray-950 mb-2">Nuclear Physics</div>
+                  <div className="text-xs text-gray-500 font-medium leading-relaxed mb-6">
+                    Analyze the internal stability of atomic nuclei through decay curves and energy potential models.
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    <span className="px-3 py-1.5 bg-gray-50 text-gray-600 text-[9px] font-black uppercase tracking-widest rounded-lg border border-gray-100 group-hover:bg-purple-50 group-hover:text-purple-600 transition-colors">Decay Curves</span>
+                    <span className="px-3 py-1.5 bg-gray-50 text-gray-600 text-[9px] font-black uppercase tracking-widest rounded-lg border border-gray-100 group-hover:bg-purple-50 group-hover:text-purple-600 transition-colors">Half-Life</span>
+                  </div>
+                </div>
+                <div className="mt-auto pt-4 text-purple-600 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
+                  Open Graphs <ArrowRight size={18} />
+                </div>
+              </motion.button>
+              
+              {/* Future modules */}
+              <div className="w-full bg-gray-50/50 p-8 rounded-[2.5rem] border border-dashed border-gray-200 flex flex-col items-center justify-center grayscale opacity-60 text-center">
+                <div className="bg-white p-4 rounded-2xl text-gray-300 shadow-sm mb-4">
+                  <Target size={32} />
+                </div>
+                <div className="font-bold text-lg text-gray-400">Quantum States</div>
+                <div className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2 bg-gray-100 px-3 py-1 rounded-full">Coming Soon</div>
+              </div>
+
+              {/* Statistical Mechanics / Thermodynamics Placeholder */}
+              <div className="w-full bg-gray-50/50 p-8 rounded-[2.5rem] border border-dashed border-gray-200 flex flex-col items-center justify-center grayscale opacity-60 text-center">
+                <div className="bg-white p-4 rounded-2xl text-gray-300 shadow-sm mb-4">
+                  <RefreshCw size={32} />
+                </div>
+                <div className="font-bold text-lg text-gray-400">Thermodynamics</div>
+                <div className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2 bg-gray-100 px-3 py-1 rounded-full">Blueprint</div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        <footer className="w-full max-w-6xl py-12 px-8 text-left border-t border-gray-100/50">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
+            <p className="text-[11px] text-gray-400 font-medium leading-relaxed max-w-xs">
+              Scientific simulations utilize the Graphing Engine v1.4 for high-precision coordinate mapping and function evaluation.
+            </p>
+            <div className="flex gap-8 text-[10px] font-black uppercase tracking-widest text-gray-300">
+              <span className="hover:text-purple-600 cursor-help transition-colors">Documentation</span>
+              <span className="hover:text-purple-600 cursor-help transition-colors">API Keys</span>
+            </div>
           </div>
         </footer>
       </div>
